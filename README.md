@@ -8,7 +8,8 @@
 > **Disclaimer:**\
 > This project is **NOT ASSOCIATED** with the official Meshtastic Project. It is provided solely as an extension to add AI and advanced features to your Meshtastic network.
 >
-
+--- 
+Come join the Discord! https://discord.gg/Gsynun57aa
 ---
 
 ## Features
