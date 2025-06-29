@@ -1,0 +1,65 @@
+{
+  "commands": [
+    {
+      "command": "/ping",
+      "response": "Pong!"
+    },
+    {
+      "command": "/weather",
+      "response": "Currently, local weather is unknown. (This is a placeholder.)"
+    },
+    {
+      "command": "/hello",
+      "response": "Hello! I'm a Nerdscorp AI bot. Type /help to see the available commands."
+    },
+    {
+      "command": "/funfact",
+      "ai_prompt": "Give me a fun fact about {user_input}"
+    },
+    {
+      "command": "/joke",
+      "response": "Here's a joke for you: Why was the math book sad? Because it had too many problems."
+    },
+    {
+      "command": "/define",
+      "ai_prompt": "Define '{user_input}'"
+    },
+    {
+      "command": "/translate",
+      "response": "Please specify a language to translate to.",
+      "ai_prompt": "{language} translation of '{user_input}'"
+    },
+    {
+      "command": "/calc",
+      "response": "What operation do you want to perform? (add, subtract, multiply, divide) "
+    },
+    {
+      "command": "/inspire",
+      "response": "Here's a quote for inspiration: 'Believe you can and you're halfway there.' - Theodore Roosevelt"
+    },
+    {
+      "command": "/date",
+      "response": "The current date is: {date}"
+    },
+    {
+      "command": "/time",
+      "response": "The current time is: {time}"
+    },
+    {
+      "command": "/random",
+      "ai_prompt": "I'll generate a random number between 1 and 100. "
+    },
+    {
+      "command": "/rock",
+      "response": "Rock on! Here's a rock song for you: {song}"
+    },
+    {
+      "command": "/sport",
+      "response": "What sport do you want to know about? (e.g., soccer, basketball, football)"
+    },
+    {
+      "command": "/recipe",
+      "ai_prompt": "Give me a recipe for {dish} using {ingredients}."
+    }
+  ]
+}
