@@ -1,5 +1,8 @@
 # Meshtastic Controller
 
+![image](https://github.com/user-attachments/assets/80c0e830-a070-4231-b330-b208ba4dcc92)
+
+
 **Meshtastic Controller** is an experimental project that bridges [Meshtastic](https://meshtastic.org/) LoRa mesh networks with powerful AI chatbots. This release builds on what Meshtastic has given us by introducing a major WebUI overhaul, enhanced error handling with UTC‑based logging, refined command processing (including case‑insensitivity), and expanded integrations for emergency notifications via Twilio, SMTP email, and Discord. You can choose between local models (LM Studio, Ollama), OpenAI, or even integrate with Home Assistant for off‑grid AI assistance.
 
 > **Disclaimer:**\
