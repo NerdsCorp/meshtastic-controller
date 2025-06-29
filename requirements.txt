@@ -1,0 +1,7 @@
+meshtastic
+pubsub
+requests>=2.32.4
+flask>=3.1.1
+twilio
+unidecode
+discord.py

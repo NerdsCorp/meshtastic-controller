@@ -1,0 +1,9 @@
+services:
+  meshtastic-controller:
+    image: ghcr.io/nerdscorp/meshtastic-controller:latest
+    ports:
+      - 5000:5000
+    volumes:
+      # Copy config files to directory on docker host and update directory location below
+      - ./config/:/app/config/
+
