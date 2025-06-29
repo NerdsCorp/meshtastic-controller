@@ -400,6 +400,7 @@ json
 - **Message Routing & Commands:**  
   - Custom commands can be added in commands_config.json.
   - The WebUI Dashboard (accessible at [http://localhost:5000/dashboard](http://localhost:5000/dashboard)) displays messages and node status.
+  - The WebUI Instructions (accessible at [http://localhost:5000/instructions](http://localhost:5000/instructions)) displays How to use this program.
   
 - **AI Provider Settings:**  
   - Adjust "ai_provider" and related API settings (timeouts, models, etc.) for LM Studio, OpenAI, Ollama, or Home Assistant integration.
