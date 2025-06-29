@@ -39,6 +39,9 @@
 - **Windows‑Focused - Linux compatibility confirmed!**
   - Official support for Windows environments with installation guides; instructions for Linux available now!
 
+![image](https://github.com/user-attachments/assets/a16235d4-6182-43ec-a9fe-7dfbe880ef69)
+
+
 ---
 
 ## Quick Start (Windows)
@@ -115,6 +118,9 @@
      ```
 3. **Access the WebUI Dashboard:**
    - Open your browser and navigate to [http://localhost:5000/](http://localhost:5000/).
+
+![image](https://github.com/user-attachments/assets/de7e9a96-efaa-45cb-8521-3ad7c7c24edb)
+
 
 ---
 
