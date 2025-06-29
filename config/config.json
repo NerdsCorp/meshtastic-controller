@@ -48,7 +48,7 @@
   "max_ai_chunks": 5,
   "chunk_delay": 10,
   "local_location_string": "@ YOUR LOCATION HERE",
-  "ai_node_name": "Mesh-AI-Alpha",
+  "ai_node_name": "Mesh-Controller",
   "max_message_log": 0,
 
   "enable_twilio": false,
