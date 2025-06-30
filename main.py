@@ -2091,7 +2091,7 @@ def commands_editor():
     return render_template_string(f"""
     <html>
     <head>
-      <title>Edit Commands Config</title>
+      <title>Edit Commands</title>
       <style>
         body {{ background: #000; color: #fff; font-family: Arial; }}
         .container {{ max-width: 600px; margin:40px auto; background:#111; padding:30px; border-radius:12px; border:2px solid #ffa500; }}
