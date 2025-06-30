@@ -968,8 +968,8 @@ def twilio_webhook():
 def dashboard():
     channel_names = config.get("channel_names", {})
     html = """
-<html>
 <head>
+  <meta charset="UTF-8" />
   <title>Meshtastic Controller Dashboard</title>
   <style>
     :root {
@@ -978,7 +978,7 @@ def dashboard():
     body {
       background: #000;
       color: #fff;
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
       margin: 0;
       padding-top: 40px;
       transition: filter 0.5s linear;
@@ -990,10 +990,9 @@ def dashboard():
       width: 100%;
       z-index: 350;
       text-align: center;
-      padding: 0;
+      padding: 6px;
       font-size: 14px;
       font-weight: bold;
-      display: block;
     }
     .header-buttons {
       position: fixed;
@@ -1010,6 +1009,9 @@ def dashboard():
       border-radius: 4px;
       font-weight: bold;
     }
+    .header-buttons a:hover {
+      background: #ffc84a;
+    }
     #ticker {
       position: fixed;
       top: 70px;
@@ -1018,108 +1020,126 @@ def dashboard():
       white-space: nowrap;
       overflow: hidden;
       width: 100%;
-      padding: 5px 0;
+      padding: 8px 0;
       z-index: 250;
-      font-size: 36px;
-    }
-    #ticker {
+      font-size: 32px;
       display: none;
-    }
-
-    @keyframes tickerScroll {
-      0%   { transform: translateX(100%); }
-      100% { transform: translateX(-100%); }
-    }
-    #sendForm {
-      margin: 20px;
-      padding: 20px;
-      background: #111;
-      border: 2px solid var(--theme-color);
-      border-radius: 10px;
-    }
-    .three-col {
-      display: flex;
-      flex-direction: row;
-      gap: 20px;
-      margin: 20px;
-      height: calc(100vh - 220px);
-    }
-    .three-col .col:nth-child(1),
-    .three-col .col:nth-child(3) {
-      flex: 2;
-      overflow-y: auto;
-    }
-    .three-col .col:nth-child(2) {
-      flex: 1;
-      overflow-y: auto;
     }
     .lcars-panel {
       background: #111;
       padding: 20px;
       border: 2px solid var(--theme-color);
       border-radius: 10px;
+      margin-bottom: 20px;
     }
     .lcars-panel h2 {
       color: var(--theme-color);
-      margin-top: 0;
+      font-size: 20px;
+      margin: 0 0 12px;
+    }
+    #sendForm {
+      margin: 20px;
+      padding: 20px;
+    }
+    .three-col {
+      display: flex;
+      gap: 20px;
+      margin: 20px;
+      height: calc(100vh - 220px);
+    }
+    .three-col .col {
+      flex: 1;
+      overflow-y: auto;
     }
     .message {
       border: 1px solid var(--theme-color);
       border-radius: 4px;
-      margin: 5px;
-      padding: 5px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      background: #222;
+      word-wrap: break-word;
     }
     .message.outgoing {
-      background: #222;
+      background: #333;
     }
     .message.newMessage {
       border-color: #00ff00;
     }
     .timestamp {
-      font-size: 0.8em;
-      color: #666;
+      font-size: 0.75em;
+      color: #ccc;
+      margin-bottom: 5px;
     }
     .btn {
-      margin-left: 10px;
-      padding: 2px 6px;
+      background: var(--theme-color);
+      color: #000;
+      border: none;
+      padding: 4px 8px;
       font-size: 0.8em;
+      font-weight: bold;
+      border-radius: 4px;
       cursor: pointer;
+      margin-left: 8px;
+    }
+    .btn:hover {
+      background: #ffc84a;
     }
     .switch {
       position: relative;
       display: inline-block;
-      width: 60px;
-      height: 34px;
-      vertical-align: middle;
+      width: 50px;
+      height: 28px;
     }
-    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch input {
+      display: none;
+    }
     .slider {
       position: absolute;
       cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #555;
+      transition: 0.4s;
+      border-radius: 34px;
     }
     .slider:before {
       position: absolute;
       content: "";
-      height: 26px;
-      width: 26px;
+      height: 20px;
+      width: 20px;
       left: 4px;
       bottom: 4px;
-      background-color: white;
-      transition: .4s;
+      background-color: #fff;
+      transition: 0.4s;
+      border-radius: 50%;
     }
-    input:checked + .slider { background-color: #2196F3; }
-    input:focus + .slider { box-shadow: 0 0 1px #2196F3; }
-    input:checked + .slider:before { transform: translateX(26px); }
-    .slider.round { border-radius: 34px; }
-    .slider.round:before { border-radius: 50%; }
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
     #charCounter {
-      font-size: 0.9em;
+      font-size: 0.85em;
       color: #ccc;
       text-align: right;
       margin-top: 5px;
+    }
+    .settings-toggle {
+      background: var(--theme-color);
+      color: #000;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      z-index: 300;
+      border-top: 2px solid #fff;
+      font-weight: bold;
     }
     .settings-panel {
       background: #111;
@@ -1134,42 +1154,54 @@ def dashboard():
       z-index: 300;
       display: none;
     }
-    .settings-toggle {
-      background: var(--theme-color);
-      color: #000;
-      padding: 10px;
-      text-align: center;
-      cursor: pointer;
-      position: fixed;
-      bottom: 0;
-      left: 0;
+    .settings-panel label {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    .settings-panel input[type="color"],
+    .settings-panel input[type="text"],
+    .settings-panel input[type="range"] {
+      margin: 8px 0 16px;
+    }
+    textarea,
+    select,
+    input[type="text"] {
+      font-family: sans-serif;
+      font-size: 1em;
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #333;
+      background: #222;
+      color: #fff;
       width: 100%;
-      z-index: 300;
-      border-top: 2px solid #fff;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
     }
   </style>
   <script>
-  // Global variables to store the last DM and channel targets
-  var lastDMTarget = null;
-  var lastChannelTarget = null;
+    // Global variables to store the last DM and channel targets
+    var lastDMTarget = null;
+    var lastChannelTarget = null;
 
-  // Reply using the last direct message target
-  function replyToLastDM() {
-    if (lastDMTarget !== null) {
-      replyToMessage('direct', lastDMTarget);
-    } else {
-      alert("No direct message target available.");
+    // Reply using the last direct message target
+    function replyToLastDM() {
+      if (lastDMTarget !== null) {
+        replyToMessage('direct', lastDMTarget);
+      } else {
+        alert("No direct message target available.");
+      }
     }
-  }
 
-  // Reply using the last broadcast channel target
-  function replyToLastChannel() {
-    if (lastChannelTarget !== null) {
-      replyToMessage('broadcast', lastChannelTarget);
-    } else {
-      alert("No broadcast channel target available.");
+    // Reply using the last broadcast channel target
+    function replyToLastChannel() {
+      if (lastChannelTarget !== null) {
+        replyToMessage('broadcast', lastChannelTarget);
+      } else {
+        alert("No broadcast channel target available.");
+      }
     }
-  }
 
     // Set the incoming sound source and save it in localStorage
     function setIncomingSound(url) {
@@ -1177,9 +1209,10 @@ def dashboard():
       if (soundElem) {
         soundElem.src = url;
         localStorage.setItem("incomingSoundURL", url);
+      }
     }
-  }
-      // On load, retrieve stored incoming sound URL
+
+    // On load, retrieve stored incoming sound URL
     window.addEventListener("load", function() {
       var storedSoundURL = localStorage.getItem("incomingSoundURL");
       if (storedSoundURL) {
@@ -1187,8 +1220,7 @@ def dashboard():
         setIncomingSound(storedSoundURL);
       }
     });
-  </script>
-  <script>
+
     var hueRotateInterval = null;
     var currentHue = 0;
     function applyThemeColor(color) {
@@ -1243,68 +1275,68 @@ def dashboard():
         console.error("Error fetching data:", e);
       }
     }
-function updateMessagesUI(messages) {
-  messages = messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  
-  // Update global targets from the most recent messages
-  lastDMTarget = null;
-  lastChannelTarget = null;
-  for (var i = 0; i < messages.length; i++) {
-    var m = messages[i];
-    if (m.direct && m.node_id && lastDMTarget === null) {
-      lastDMTarget = m.node_id;
-    }
-    if (!m.direct && m.channel_idx !== null && lastChannelTarget === null) {
-      lastChannelTarget = m.channel_idx;
-    }
-  }
+    function updateMessagesUI(messages) {
+      messages = messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-  var channelDiv = document.getElementById("channelDiv");
-  var dmMessagesDiv = document.getElementById("dmMessagesDiv");
-  var discordDiv = document.getElementById("discordMessagesDiv");
-  if (channelDiv) channelDiv.innerHTML = "";
-  if (dmMessagesDiv) dmMessagesDiv.innerHTML = "";
-  if (discordDiv) discordDiv.innerHTML = "";
-  var now = new Date().getTime();
-  messages.forEach(function(m) {
-    var msgTime = new Date(m.timestamp).getTime();
-    var wrap = document.createElement("div");
-    wrap.className = "message" + (m.emergency ? " emergency" : "");
-    if (m.node === "WebUI") {
-      wrap.classList.add("outgoing");
-    }
-    if (m.node !== "WebUI" && m.node !== "AI-Bot" && m.node !== "Home Assistant") {
-      var replyBtn = document.createElement("button");
-      replyBtn.className = "btn";
-      replyBtn.textContent = "Reply";
-      if (m.direct && m.node_id) {
-        replyBtn.onclick = function(){ replyToMessage('direct', m.node_id); };
-      } else if (!m.direct && m.channel_idx !== null) {
-        replyBtn.onclick = function(){ replyToMessage('broadcast', m.channel_idx); };
+      // Update global targets from the most recent messages
+      lastDMTarget = null;
+      lastChannelTarget = null;
+      for (var i = 0; i < messages.length; i++) {
+        var m = messages[i];
+        if (m.direct && m.node_id && lastDMTarget === null) {
+          lastDMTarget = m.node_id;
+        }
+        if (!m.direct && m.channel_idx !== null && lastChannelTarget === null) {
+          lastChannelTarget = m.channel_idx;
+        }
       }
-      wrap.appendChild(replyBtn);
+
+      var channelDiv = document.getElementById("channelDiv");
+      var dmMessagesDiv = document.getElementById("dmMessagesDiv");
+      var discordDiv = document.getElementById("discordMessagesDiv");
+      if (channelDiv) channelDiv.innerHTML = "";
+      if (dmMessagesDiv) dmMessagesDiv.innerHTML = "";
+      if (discordDiv) discordDiv.innerHTML = "";
+      var now = new Date().getTime();
+      messages.forEach(function(m) {
+        var msgTime = new Date(m.timestamp).getTime();
+        var wrap = document.createElement("div");
+        wrap.className = "message" + (m.emergency ? " emergency" : "");
+        if (m.node === "WebUI") {
+          wrap.classList.add("outgoing");
+        }
+        if (m.node !== "WebUI" && m.node !== "AI-Bot" && m.node !== "Home Assistant") {
+          var replyBtn = document.createElement("button");
+          replyBtn.className = "btn";
+          replyBtn.textContent = "Reply";
+          if (m.direct && m.node_id) {
+            replyBtn.onclick = function(){ replyToMessage('direct', m.node_id); };
+          } else if (!m.direct && m.channel_idx !== null) {
+            replyBtn.onclick = function(){ replyToMessage('broadcast', m.channel_idx); };
+          }
+          wrap.appendChild(replyBtn);
+        }
+        if (now - msgTime < 7200000) {
+          wrap.classList.add("newMessage");
+        }
+        var icon = "";
+        if (m.direct) {
+          icon = (m.node === "WebUI") ? "📤" : "📥";
+        } else {
+          icon = (m.node === "WebUI") ? "📣" : "📢";
+        }
+        wrap.innerHTML += "<div class='timestamp'>" + icon + " " + m.timestamp + " | " + m.node + "</div>" +
+                           "<div>" + m.message + "</div>";
+        // Place messages based on the node field
+        if (m.node.indexOf("Discord") !== -1) {
+          if (discordDiv) discordDiv.appendChild(wrap);
+        } else if (m.direct) {
+          if (dmMessagesDiv) dmMessagesDiv.appendChild(wrap);
+        } else {
+          if (channelDiv) channelDiv.appendChild(wrap);
+        }
+      });
     }
-    if (now - msgTime < 7200000) {
-      wrap.classList.add("newMessage");
-    }
-    var icon = "";
-    if (m.direct) {
-      icon = (m.node === "WebUI") ? "📤" : "📥";
-    } else {
-      icon = (m.node === "WebUI") ? "📣" : "📢";
-    }
-    wrap.innerHTML += "<div class='timestamp'>" + icon + " " + m.timestamp + " | " + m.node + "</div>" +
-                       "<div>" + m.message + "</div>";
-    // Place messages based on the node field
-    if (m.node.indexOf("Discord") !== -1) {
-      if (discordDiv) discordDiv.appendChild(wrap);
-    } else if (m.direct) {
-      if (dmMessagesDiv) dmMessagesDiv.appendChild(wrap);
-    } else {
-      if (channelDiv) channelDiv.appendChild(wrap);
-    }
-  });
-}
 
     function updateNodesUI(nodes) {
       var nodeListDiv = document.getElementById("nodeListDiv");
@@ -1351,36 +1383,38 @@ function updateMessagesUI(messages) {
       setInterval(fetchMessagesAndNodes, 10000);
       fetchMessagesAndNodes();
     }
+
     var function_reply_js = `
-function replyToMessage(mode, target) {
-  if (mode === 'direct') {
-    document.getElementById('modeSwitch').checked = true;
-    toggleMode();
-    document.getElementById('destNode').value = target;
-    var destText = document.getElementById('destNode').options[document.getElementById('destNode').selectedIndex].text;
-    var shortName = destText.split(" (")[0];
-    document.getElementById('messageBox').value = "Reply to @" + shortName + ": ";
-  } else if (mode === 'broadcast') {
-    document.getElementById('modeSwitch').checked = false;
-    toggleMode();
-    document.getElementById('channelSel').value = target;
-    document.getElementById('messageBox').value = "Reply in Channel " + target + ": ";
-  }
-}
-function dmToNode(nodeId, shortName) {
-  document.getElementById('modeSwitch').checked = true;
-  toggleMode();
-  var destSelect = document.getElementById('destNode');
-  for (var i = 0; i < destSelect.options.length; i++) {
-    if (destSelect.options[i].value === nodeId) {
-      destSelect.selectedIndex = i;
-      break;
+    function replyToMessage(mode, target) {
+      if (mode === 'direct') {
+        document.getElementById('modeSwitch').checked = true;
+        toggleMode();
+        document.getElementById('destNode').value = target;
+        var destText = document.getElementById('destNode').options[document.getElementById('destNode').selectedIndex].text;
+        var shortName = destText.split(" (")[0];
+        document.getElementById('messageBox').value = "Reply to @" + shortName + ": ";
+      } else if (mode === 'broadcast') {
+        document.getElementById('modeSwitch').checked = false;
+        toggleMode();
+        document.getElementById('channelSel').value = target;
+        document.getElementById('messageBox').value = "Reply in Channel " + target + ": ";
+      }
     }
-  }
-  document.getElementById('messageBox').value = "@" + shortName + ": ";
-}
-`;
+    function dmToNode(nodeId, shortName) {
+      document.getElementById('modeSwitch').checked = true;
+      toggleMode();
+      var destSelect = document.getElementById('destNode');
+      for (var i = 0; i < destSelect.options.length; i++) {
+        if (destSelect.options[i].value === nodeId) {
+          destSelect.selectedIndex = i;
+          break;
+        }
+      }
+      document.getElementById('messageBox').value = "@" + shortName + ": ";
+    }
+    `;
     eval(function_reply_js);
+
     function toggleMode() {
       var isDM = document.getElementById('modeSwitch').checked;
       if (isDM) {
@@ -1393,9 +1427,24 @@ function dmToNode(nodeId, shortName) {
         document.getElementById('modeLabel').textContent = "Broadcast";
       }
     }
+
     window.addEventListener("load", function(){
       document.getElementById('modeSwitch').addEventListener('change', toggleMode);
+      document.getElementById('messageBox').addEventListener('input', updateCharCounter);
+      onPageLoad();
+
+      // Restore theme color from localStorage if present
+      var storedColor = localStorage.getItem("uiThemeColor");
+      if(storedColor) applyThemeColor(storedColor);
+
+      // Restore hue rotate setting
+      var hueEnabled = localStorage.getItem("hueRotateEnabled") === "true";
+      var hueSpeed = parseFloat(localStorage.getItem("hueRotateSpeed")) || 10;
+      document.getElementById('hueRotateEnabled').checked = hueEnabled;
+      document.getElementById('hueRotateSpeed').value = hueSpeed;
+      toggleHueRotate(hueEnabled, hueSpeed);
     });
+
     function updateCharCounter() {
       var text = document.getElementById('messageBox').value;
       var count = text.length;
@@ -1403,12 +1452,9 @@ function dmToNode(nodeId, shortName) {
       if(chunks > 5) { chunks = 5; }
       document.getElementById('charCounter').textContent = "Characters: " + count + "/1000, Chunks: " + chunks + "/5";
     }
-    window.addEventListener("load", function(){
-      document.getElementById('messageBox').addEventListener('input', updateCharCounter);
-    });
   </script>
 </head>
-<body onload="onPageLoad()">
+<body>
   <div id="connectionStatus"></div>
   <div class="header-buttons">
     <a href="/instructions">Instructions</a>
@@ -1420,82 +1466,95 @@ function dmToNode(nodeId, shortName) {
   <div id="ticker"><p></p></div>
   <audio id="beepAudio" src="data:audio/wav;base64,UklGRgAAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+/+cAAACAAAACAAACAAACAAACAAAACAAACAAAAAAAAAAA"></audio>
   <audio id="incomingSound"></audio>
-  <div class="lcars-panel" id="sendForm">
-    <h2>Send a Message</h2>
-    <form method="POST" action="/ui_send">
-      <label>Message Mode:</label>
-      <label class="switch">
-        <input type="checkbox" id="modeSwitch">
-        <span class="slider round"></span>
-      </label>
-      <span id="modeLabel">Direct</span>
-      <br/><br/>
-      <div id="dmField" style="display: none;">
-        <label>Destination Node:</label><br/>
-        <select id="destNode" name="destination_node">
-          <option value="">--Select Node--</option>
-        </select><br/><br/>
-      </div>
-      <div id="channelField" style="display: block;">
-        <label>Channel:</label><br/>
-        <select id="channelSel" name="channel_index">
-"""
-    for i in range(8):
-        ch_name = channel_names.get(str(i), f"Channel {i}")
-        html += f"<option value='{i}'>{i} - {ch_name}</option>"
-    html += """
-        </select><br/><br/>
-      </div>
-      <label>Message:</label><br/>
-      <textarea id="messageBox" name="message" rows="3" style="width:80%;"></textarea>
-      <div id="charCounter">Characters: 0/1000, Chunks: 0/5</div>
-      <br/>
+
+  <div style="display: flex; gap: 20px; margin: 20px;">
+  <div class="lcars-panel" id="sendForm" style="flex: 0 0 40%; display: flex; flex-direction: column; max-height: 450px; overflow-y: auto;">
+  <h2>Send a Message</h2>
+  <form method="POST" action="/ui_send" style="flex-grow: 1; display: flex; flex-direction: column;">
+    <label>Message Mode:</label>
+    <label class="switch">
+      <input type="checkbox" id="modeSwitch" />
+      <span class="slider round"></span>
+    </label>
+    <span id="modeLabel">Direct</span>
+    <br/><br/>
+    <div id="dmField" style="display: none;">
+      <label>Destination Node:</label><br/>
+      <select id="destNode" name="destination_node">
+        <option value="">--Select Node--</option>
+      </select><br/><br/>
+    </div>
+    <div id="channelField" style="display: block;">
+      <label>Channel:</label><br/>
+      <select id="channelSel" name="channel_index">
+        <option value="0">0 - Channel 0</option>
+        <option value="1">1 - Channel 1</option>
+        <option value="2">2 - Channel 2</option>
+        <option value="3">3 - Channel 3</option>
+        <option value="4">4 - Channel 4</option>
+        <option value="5">5 - Channel 5</option>
+        <option value="6">6 - Channel 6</option>
+        <option value="7">7 - Channel 7</option>
+      </select><br/><br/>
+    </div>
+    <label>Message:</label><br/>
+    <textarea id="messageBox" name="message" rows="3" style="width: 100%;"></textarea>
+    <div id="charCounter">Characters: 0/1000, Chunks: 0/5</div>
+    <br/>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
       <button type="submit">Send</button>
       <button type="button" onclick="replyToLastDM()">Reply to Last DM</button>
       <button type="button" onclick="replyToLastChannel()">Reply to Last Channel</button>
-    </form>
+    </div>
+  </form>
+</div>
+
+  <div class="lcars-panel" style="flex: 1; max-height: 450px; overflow-y: auto;">
+    <h2>Discord Messages</h2>
+    <div id="discordMessagesDiv"></div>
   </div>
-  <div class="three-col">
-    <div class="col">
-      <div class="lcars-panel">
-        <h2>Channel Messages</h2>
-        <div id="channelDiv"></div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="lcars-panel">
-        <h2>Available Nodes</h2>
-        <div id="nodeListDiv"></div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="lcars-panel">
-        <h2>Direct Messages</h2>
-        <div id="dmMessagesDiv"></div>
-      </div>
+</div>
+
+<!-- Existing three-column layout remains below -->
+<div class="three-col">
+  <div class="col">
+    <div class="lcars-panel">
+      <h2>Channel Messages</h2>
+      <div id="channelDiv"></div>
     </div>
   </div>
-        <div class="lcars-panel" style="margin:20px;">
-        <h2>Discord Messages</h2>
-        <div id="discordMessagesDiv"></div>
-      </div>
+  <div class="col">
+    <div class="lcars-panel">
+      <h2>Available Nodes</h2>
+      <div id="nodeListDiv"></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="lcars-panel">
+      <h2>Direct Messages</h2>
+      <div id="dmMessagesDiv"></div>
+    </div>
+  </div>
+</div>
+
   <div class="settings-toggle" id="settingsToggle" onclick="toggleSettingsPanel()">Show UI Settings</div>
   <div class="settings-panel" id="settingsPanel">
     <h2>UI Settings</h2>
     <label for="uiColorPicker">Theme Color:</label>
-    <input type="color" id="uiColorPicker" value="#ffa500" onchange="applyThemeColor(this.value)">
-    <br/><br/>
+    <input type="color" id="uiColorPicker" value="#ffa500" onchange="applyThemeColor(this.value)" />
+    <br/>
     <label for="hueRotateEnabled">Enable Hue Rotation:</label>
-    <input type="checkbox" id="hueRotateEnabled" onchange="toggleHueRotate(this.checked, parseFloat(document.getElementById('hueRotateSpeed').value))">
-    <br/><br/>
+    <input type="checkbox" id="hueRotateEnabled" onchange="toggleHueRotate(this.checked, parseFloat(document.getElementById('hueRotateSpeed').value))" />
+    <br/>
     <label for="hueRotateSpeed">Hue Rotation Speed (seconds per full rotation):</label>
-    <input type="range" id="hueRotateSpeed" min="5" max="60" step="0.1" value="10" onchange="if(document.getElementById('hueRotateEnabled').checked){ startHueRotate(parseFloat(this.value)); }">
-    <br/><br/>
+    <input type="range" id="hueRotateSpeed" min="5" max="60" step="0.1" value="10" onchange="if(document.getElementById('hueRotateEnabled').checked){ startHueRotate(parseFloat(this.value)); }" />
+    <br/>
     <label for="soundURL">Incoming Message Sound URL:</label>
-    <input type="text" id="soundURL" placeholder="/static/sound.mp3" onchange="setIncomingSound(this.value)">
+    <input type="text" id="soundURL" placeholder="/static/sound.mp3" onchange="setIncomingSound(this.value)" />
   </div>
 </body>
 </html>
+
 """
     return html
 
