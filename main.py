@@ -19,6 +19,8 @@ from twilio.rest import Client  # for Twilio SMS support
 from unidecode import unidecode   # Added unidecode import for Ollama text normalization
 import asyncio
 import discord
+import pytz
+from datetime import datetime
 
 # -----------------------------
 # Verbose Logging Setup
@@ -174,6 +176,8 @@ def safe_load_json(path, default_value):
     return default_value
 
 config = safe_load_json(CONFIG_FILE, {})
+timezone_str = config.get("timezone", "UTC")  # Default to UTC if not set
+timezone_obj = pytz.timezone(timezone_str)
 commands_config = safe_load_json(COMMANDS_CONFIG_FILE, {"commands": []})
 try:
     with open(MOTD_FILE, "r", encoding="utf-8") as f:
@@ -654,7 +658,10 @@ def handle_command(cmd, full_text, sender_id):
     cmd = cmd.lower()
     dprint(f"handle_command => cmd='{cmd}', full_text='{full_text}', sender_id={sender_id}")
     if cmd == "/about":
-        return "Meshtastic-AI Off Grid Chat Bot - By: www.NerdsCorp.net"
+        return "Meshtastic-Controller Off Grid Chat - By: WWW.NerdsCorp.NET"
+    elif cmd == "/time":
+        now = datetime.now(timezone_obj)
+        return f"Current time in {timezone_str}: {now.strftime('%Y-%m-%d %H:%M:%S')}"
     elif cmd in ["/ai", "/bot", "/query", "/data"]:
         user_prompt = full_text[len(cmd):].strip()
         if AI_PROVIDER == "home_assistant" and HOME_ASSISTANT_ENABLE_PIN:
