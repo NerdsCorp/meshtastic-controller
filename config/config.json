@@ -65,6 +65,7 @@
   "alert_email_to": "ALERT EMAIL HERE",
 
   "enable_discord": false,
+  "enable_discord_webhook": true
   "discord_webhook_url": "",
   "discord_send_emergency": false,
   "discord_send_ai": false,
