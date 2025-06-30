@@ -1879,18 +1879,105 @@ def config_editor():
     for key, value in config.items():
         if isinstance(value, bool):
             checked = "checked" if value else ""
-            field = f'<label>{key}: <input type="checkbox" name="{key}" {checked}></label><br>'
+            field = f'<label style="margin-right:20px;">{key}: <input type="checkbox" name="{key}" {checked}></label><br>'
         else:
-            field = f'<label>{key}: <input type="text" name="{key}" value="{value}"></label><br>'
+            field = f'<label style="margin-right:20px;">{key}: <input type="text" name="{key}" value="{value}"></label><br>'
         form_fields += field
 
     return render_template_string(f"""
+    <html>
+    <head>
+      <title>Edit Config - Meshtastic Controller</title>
+      <style>
+        body {{
+          background: #000;
+          color: #fff;
+          font-family: Arial, sans-serif;
+          padding: 0;
+          margin: 0;
+        }}
+        .header {{
+          background: #111;
+          padding: 20px;
+          border-bottom: 2px solid #ffa500;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }}
+        .header a {{
+          color: #ffa500;
+          text-decoration: none;
+          font-weight: bold;
+          margin: 0 10px;
+        }}
+        .container {{
+          max-width: 800px;
+          margin: 40px auto;
+          background: #111;
+          padding: 30px 40px;
+          border-radius: 12px;
+          border: 2px solid #ffa500;
+          box-shadow: 0 0 20px #000a;
+        }}
+        h1 {{
+          color: #ffa500;
+        }}
+        label {{
+          display: block;
+          margin: 15px 0 5px 0;
+        }}
+        input[type="text"], input[type="password"] {{
+          width: 70%;
+          padding: 6px;
+          border-radius: 4px;
+          border: 1px solid #ffa500;
+          background: #222;
+          color: #fff;
+        }}
+        input[type="checkbox"] {{
+          transform: scale(1.3);
+          margin-left: 8px;
+        }}
+        button[type="submit"] {{
+          margin-top: 20px;
+          padding: 8px 24px;
+          background: #ffa500;
+          color: #000;
+          border: none;
+          border-radius: 6px;
+          font-weight: bold;
+          font-size: 1em;
+          cursor: pointer;
+        }}
+        a.back {{
+          display: inline-block;
+          margin-top: 20px;
+          color: #ffa500;
+          text-decoration: none;
+        }}
+        a.back:hover {{
+          text-decoration: underline;
+        }}
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <span><a href="{{{{ url_for('dashboard') }}}}">🡨 Dashboard</a></span>
+        <span>
+          <a href="{{{{ url_for('instructions') }}}}">Instructions</a>
+          <a href="{{{{ url_for('logs') }}}}" target="_blank">Logs</a>
+        </span>
+      </div>
+      <div class="container">
         <h1>Edit Config</h1>
         <form method="post">
             {form_fields}
-            <button type="submit">Save</button>
+            <button type="submit">Save Changes</button>
         </form>
-        <a href="{{{{ url_for('dashboard') }}}}">Back to Dashboard</a>
+        <a class="back" href="{{{{ url_for('dashboard') }}}}">← Back to Dashboard</a>
+      </div>
+    </body>
+    </html>
     """)
 
 if __name__ == "__main__":
