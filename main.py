@@ -1797,6 +1797,7 @@ def instructions():
       <li>Use <code>/ai</code>, <code>/bot</code>, <code>/query</code>, or <code>/data</code> followed by your message to get an AI response.</li>
       <li>For direct messages, DM the AI node if configured to reply.</li>
       <li>Send <code>/whereami</code> to retrieve the node’s GPS coordinates (if available).</li>
+      <li>Send <code>/time</code> to retrieve the current time,(if your timezone is set correctily).</li>
       <li>Trigger an emergency alert with <code>/emergency &lt;message&gt;</code> or <code>/911 &lt;message&gt;</code>. Alerts go via Twilio, SMTP, and Discord if enabled, including GPS and timestamps.</li>
       <li>Send SMS via <code>/sms &lt;+15555555555&gt; &lt;message&gt;</code>.</li>
     </ul>
