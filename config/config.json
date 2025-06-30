@@ -1,9 +1,10 @@
 {
   "debug": false,
   "use_mesh_interface": false,
-  "use_wifi": true,
+  "use_wifi": false,
   "wifi_host": "MESHTASTIC NODE IP HERE",
   "wifi_port": 4403,
+  "timezone": "America/New_York",
 
   "serial_port": "",
   "ai_provider": "lmstudio, openai, or ollama",

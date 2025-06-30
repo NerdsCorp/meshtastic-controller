@@ -19,6 +19,9 @@ from twilio.rest import Client  # for Twilio SMS support
 from unidecode import unidecode   # Added unidecode import for Ollama text normalization
 import asyncio
 import discord
+import pytz
+from datetime import datetime
+from flask import render_template_string, request, redirect, url_for
 
 # -----------------------------
 # Verbose Logging Setup
@@ -89,9 +92,12 @@ log = logging.getLogger('werkzeug')
 log.disabled = True
 
 BANNER = (
-    "\033[38;5;214m"
     """
-    
+    """
+    """
+
+
+
 MMMMMMMM               MMMMMMMM                                     hhhhhhh                      tttt                                                      tttt            iiii                           
 M:::::::M             M:::::::M                                     h:::::h                   ttt:::t                                                   ttt:::t           i::::i                          
 M::::::::M           M::::::::M                                     h:::::h                   t:::::t                                                   t:::::t            iiii                           
@@ -134,20 +140,15 @@ C:::::C              o::::o     o::::o  n::::n    n::::n      t:::::t           
      CCC::::::::::::C oo:::::::::::oo   n::::n    n::::n        tt:::::::::::tt r:::::r             oo:::::::::::oo l::::::ll::::::l  ee:::::::::::::e   r:::::r                                          
         CCCCCCCCCCCCC   ooooooooooo     nnnnnn    nnnnnn          ttttttttttt   rrrrrrr               ooooooooooo   llllllllllllllll    eeeeeeeeeeeeee   rrrrrrr                                          
                                                                                                                                                                                                           
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                                                                                                                                                                 
+                                                                                                                                                                                                                                                                                                                                                                                                                    
 Version 1.0 by: Dr.Reeves (https://www.nerdscorp.net)
-    \033[32m 
-Messaging Dashboard Access: http://localhost:5000/dashboard \033[38;5;214m
-"""
-    "\033[0m"
-    "\033[31m"
+     
+Messaging Dashboard Access: http://localhost:5000/dashboard 
+"""   
     """
 """
-    "\033[0m"
+    
 )
 print(BANNER)
 add_script_log("Script started.")
@@ -156,6 +157,7 @@ add_script_log("Script started.")
 # Load Config Files
 # -----------------------------
 CONFIG_FILE = "config/config.json"
+CONFIG_PATH = "config/config.json"
 COMMANDS_CONFIG_FILE = "config/commands_config.json"
 MOTD_FILE = "config/motd.json"
 LOG_FILE = "config/messages.log"
@@ -173,8 +175,29 @@ def safe_load_json(path, default_value):
         print(f"⚠️ Could not load {path}: {e}")
     return default_value
 
+def save_config(cfg):
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, indent=2)
+
 config = safe_load_json(CONFIG_FILE, {})
+timezone_str = config.get("timezone", "UTC")  # Default to UTC if not set
+timezone_obj = pytz.timezone(timezone_str)
+print(f"Timezone set to: {timezone_str}")
+add_script_log(f"Timezone set to: {timezone_str}")
 commands_config = safe_load_json(COMMANDS_CONFIG_FILE, {"commands": []})
+
+def reload_config():
+    global config
+    config = safe_load_json(CONFIG_FILE, {})
+    print("Config reloaded:", config)
+    # re-assign any other globals here if needed
+    # e.g. global AI_PROVIDER; AI_PROVIDER = config.get("ai_provider", "lmstudio").lower()
+
+def save_commands_config(config):
+    import json
+    with open(COMMANDS_CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=2, ensure_ascii=False)
+
 try:
     with open(MOTD_FILE, "r", encoding="utf-8") as f:
         motd_content = f.read()
@@ -655,7 +678,10 @@ def handle_command(cmd, full_text, sender_id):
     cmd = cmd.lower()
     dprint(f"handle_command => cmd='{cmd}', full_text='{full_text}', sender_id={sender_id}")
     if cmd == "/about":
-        return "Meshtastic-AI Off Grid Chat Bot - By: www.NerdsCorp.net"
+        return "Meshtastic-Controller Off Grid Chat - By: WWW.NerdsCorp.NET"
+    elif cmd == "/time":
+        now = datetime.now(timezone_obj)
+        return f"Current time in {timezone_str}: {now.strftime('%Y-%m-%d %H:%M:%S')}"
     elif cmd in ["/ai", "/bot", "/query", "/data"]:
         user_prompt = full_text[len(cmd):].strip()
         if AI_PROVIDER == "home_assistant" and HOME_ASSISTANT_ENABLE_PIN:
@@ -1387,6 +1413,8 @@ function dmToNode(nodeId, shortName) {
   <div id="connectionStatus"></div>
   <div class="header-buttons">
     <a href="/instructions">Instructions</a>
+    <a href="/config">Edit Config</a>
+    <a href="/commands">Edit Commands</a>
     <a href="/logs" target="_blank">Logs</a>
   </div>
   <div id="flashDiv" style="display:none;">NEW MESSAGE!</div>
@@ -1795,9 +1823,18 @@ def instructions():
       <li>Use <code>/ai</code>, <code>/bot</code>, <code>/query</code>, or <code>/data</code> followed by your message to get an AI response.</li>
       <li>For direct messages, DM the AI node if configured to reply.</li>
       <li>Send <code>/whereami</code> to retrieve the node’s GPS coordinates (if available).</li>
+      <li>Send <code>/time</code> to retrieve the current time,(if your timezone is set correctily).</li>
       <li>Trigger an emergency alert with <code>/emergency &lt;message&gt;</code> or <code>/911 &lt;message&gt;</code>. Alerts go via Twilio, SMTP, and Discord if enabled, including GPS and timestamps.</li>
       <li>Send SMS via <code>/sms &lt;+15555555555&gt; &lt;message&gt;</code>.</li>
     </ul>
+
+    <h2>Config</h2>
+    <ul>
+        <li>Make sure that if you have not already edit you config file.</li>
+        <a href="/config">Edit Config</a>
+        <a href="/commands">Edit Commands</a>
+    <ul>
+
 
     <h2>🏠 Home Assistant Integration</h2>
     <ul>
@@ -1836,17 +1873,284 @@ def instructions():
 def root():
     return redirect(url_for("instructions"))
 
-if __name__ == "__main__":
-    while True:
-        try:
-            main()
-        except KeyboardInterrupt:
-            print("User interrupted the script. Exiting.")
-            add_script_log("Server exited via KeyboardInterrupt.")
-            break
-        except Exception as e:
-            logging.error(f"Unhandled error in main: {e}")
-            add_script_log(f"Unhandled error: {e}")
-            print("Encountered an error. Restarting in 30 seconds...")
-            time.sleep(30)
+@app.route("/config", methods=["GET", "POST"])
+def config_editor():
+    global config  # Ensure we update the global config
 
+    # Load config (make sure CONFIG_PATH is defined, e.g. CONFIG_PATH = "config/config.json")
+    config = safe_load_json(CONFIG_PATH, {})
+
+    if request.method == "POST":
+        # Update config from form fields
+        for key in config.keys():
+            value = request.form.get(key)
+            if isinstance(config[key], bool):
+                config[key] = (value == "on")
+            elif isinstance(config[key], int):
+                try:
+                    config[key] = int(value)
+                except (ValueError, TypeError):
+                    pass
+            elif isinstance(config[key], dict):
+                try:
+                    config[key] = json.loads(value)
+                except Exception:
+                    config[key] = {}
+            else:
+                config[key] = value
+        save_config(config)
+        reload_config()  # <--- ADD THIS LINE!
+         # Instead of redirect, render a template with a JS alert and redirect
+        return render_template_string("""
+        <html>
+        <head>
+        <script>
+            alert('You need to restart the server for changes to take effect.');
+            window.location.href = '/config';
+        </script>
+        </head>
+        <body>
+            <p>Config saved. You need to restart.</p>
+        </body>
+        </html>
+        """)
+
+    # Render each config option as an input
+    form_fields = ""
+    for key, value in config.items():
+        if isinstance(value, bool):
+            checked = "checked" if value else ""
+            field = f'<label style="margin-right:20px;">{key}: <input type="checkbox" name="{key}" {checked}></label><br>'
+        elif isinstance(value, int):
+            field = f'<label style="margin-right:20px;">{key}: <input type="text" name="{key}" value="{value}"></label><br>'
+        elif isinstance(value, dict):
+            field = f'''<label style="margin-right:20px;">{key}:<br>
+            <textarea name="{key}" rows="8" cols="60">{json.dumps(value, indent=2)}</textarea></label><br>'''
+        else:
+            field = f'<label style="margin-right:20px;">{key}: <input type="text" name="{key}" value="{value}"></label><br>'
+        form_fields += field
+
+    return render_template_string(f"""
+    <html>
+    <head>
+      <title>Edit Config - Meshtastic Controller</title>
+      <style>
+        body {{
+          background: #000;
+          color: #fff;
+          font-family: Arial, sans-serif;
+          padding: 0;
+          margin: 0;
+        }}
+        .header {{
+          background: #111;
+          padding: 20px;
+          border-bottom: 2px solid #ffa500;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }}
+        .header a {{
+          color: #ffa500;
+          text-decoration: none;
+          font-weight: bold;
+          margin: 0 10px;
+        }}
+        .container {{
+          max-width: 800px;
+          margin: 40px auto;
+          background: #111;
+          padding: 30px 40px;
+          border-radius: 12px;
+          border: 2px solid #ffa500;
+          box-shadow: 0 0 20px #000a;
+        }}
+        h1 {{
+          color: #ffa500;
+        }}
+        label {{
+          display: block;
+          margin: 15px 0 5px 0;
+        }}
+        input[type="text"], input[type="password"] {{
+          width: 70%;
+          padding: 6px;
+          border-radius: 4px;
+          border: 1px solid #ffa500;
+          background: #222;
+          color: #fff;
+        }}
+        input[type="checkbox"] {{
+          transform: scale(1.3);
+          margin-left: 8px;
+        }}
+        button[type="submit"] {{
+          margin-top: 20px;
+          padding: 8px 24px;
+          background: #ffa500;
+          color: #000;
+          border: none;
+          border-radius: 6px;
+          font-weight: bold;
+          font-size: 1em;
+          cursor: pointer;
+        }}
+        a.back {{
+          display: inline-block;
+          margin-top: 20px;
+          color: #ffa500;
+          text-decoration: none;
+        }}
+        a.back:hover {{
+          text-decoration: underline;
+        }}
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <span><a href="{{{{ url_for('dashboard') }}}}">🡨 Dashboard</a></span>
+        <span>
+          <a href="{{{{ url_for('instructions') }}}}">Instructions</a>
+          <a href="/commands">Edit Commands</a>
+          <a href="{{{{ url_for('logs') }}}}" target="_blank">Logs</a>
+        </span>
+      </div>
+      <div class="container">
+        <h1>Edit Config</h1>
+        <form method="post">
+            {form_fields}
+            <button type="submit">Save Changes</button>
+        </form>
+        <a class="back" href="{{{{ url_for('dashboard') }}}}">← Back to Dashboard</a>
+      </div>
+    </body>
+    </html>
+    """)
+
+@app.route("/commands", methods=["GET", "POST"])
+def commands_editor():
+    config = safe_load_json(COMMANDS_CONFIG_FILE, {"commands": []})
+
+    # Handle POST: Save changes, delete, or add empty rows
+    if request.method == "POST":
+        # Handle deletion via JS-generated POST
+        if "delete_index" in request.form:
+            idx = int(request.form["delete_index"])
+            if 0 <= idx < len(config["commands"]):
+                del config["commands"][idx]
+                save_commands_config(config)
+                return redirect(url_for("commands_editor"))
+
+        # Save all commands
+        new_commands = []
+        total = int(request.form.get("total_commands", "0"))
+        for i in range(total):
+            command = request.form.get(f"command_{i}", "").strip()
+            ai_prompt = request.form.get(f"ai_prompt_{i}", "").strip()
+            response = request.form.get(f"response_{i}", "").strip()
+            if command:
+                entry = {"command": command}
+                if ai_prompt:
+                    entry["ai_prompt"] = ai_prompt
+                if response:
+                    entry["response"] = response
+                new_commands.append(entry)
+        config["commands"] = new_commands
+        save_commands_config(config)
+        return render_template_string("""
+        <script>alert('Commands saved!'); window.location.href='/commands';</script>
+        """)
+
+    # How many empty rows to show (default: 1, or more if requested)
+    try:
+        add_rows = int(request.args.get("add_rows", "1"))
+    except Exception:
+        add_rows = 1
+
+    # Render the form fields
+    form_fields = ""
+    for i, cmd in enumerate(config.get("commands", [])):
+        form_fields += f"""
+        <div style='margin-bottom:20px; border:1px solid #ccc; padding:10px;'>
+          <label>Command: <input type='text' name='command_{i}' value="{cmd.get('command','')}" /></label><br>
+          <label>AI Prompt: <input type='text' name='ai_prompt_{i}' value="{cmd.get('ai_prompt','')}" /></label><br>
+          <label>Response: <input type='text' name='response_{i}' value="{cmd.get('response','')}" /></label><br>
+          <button type="button" onclick="deleteCommand({i})" style="background:#ff4444;color:#fff;border:none;padding:4px 16px;margin-top:8px; border-radius:4px;">Delete</button>
+        </div>
+        """
+
+    # Add empty rows for new commands
+    total_commands = len(config.get("commands", []))
+    for j in range(add_rows):
+        idx = total_commands + j
+        form_fields += f"""
+        <div style='margin-bottom:20px; border:1px dashed #ffa500; padding:10px;'>
+          <label>Command: <input type='text' name='command_{idx}' /></label><br>
+          <label>AI Prompt: <input type='text' name='ai_prompt_{idx}' /></label><br>
+          <label>Response: <input type='text' name='response_{idx}' /></label><br>
+        </div>
+        """
+
+    total_commands += add_rows
+
+    # Main output
+    return render_template_string(f"""
+    <html>
+    <head>
+      <title>Edit Commands</title>
+      <style>
+        body {{ background: #000; color: #fff; font-family: Arial; }}
+        .container {{ max-width: 600px; margin:40px auto; background:#111; padding:30px; border-radius:12px; border:2px solid #ffa500; }}
+        label {{ display:block; margin-top:8px; }}
+        input[type="text"] {{ width:90%; padding:5px; margin-bottom:8px; border-radius:4px; border:1px solid #ffa500; background:#222; color:#fff; }}
+        button {{ background:#ffa500; color:#000; border:none; border-radius:4px; padding:8px 24px; margin-top:16px; font-size:1em; cursor:pointer; }}
+        .delete-btn {{ background:#ff4444; color:#fff; border:none; padding:4px 16px; margin-top:8px; border-radius:4px; }}
+        a {{ color:#ffa500; }}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>Edit Commands Config</h1>
+        <form method="post">
+            {form_fields}
+            <input type="hidden" name="total_commands" value="{total_commands}">
+            <button type="submit">Save Commands</button>
+        </form>
+        <form method="get" style="margin-top:20px;">
+            <label>Add more empty rows:
+                <input type="number" name="add_rows" min="1" max="10" value="1" style="width:60px;">
+            </label>
+            <button type="submit">Add Rows</button>
+        </form>
+        <a href='/dashboard'>← Back to Dashboard</a>
+      </div>
+      <script>
+      function deleteCommand(idx) {{
+          if(confirm("Are you sure you want to delete this command?")) {{
+              var form = document.createElement("form");
+              form.method = "POST";
+              form.style.display = "none";
+              var input = document.createElement("input");
+              input.type = "hidden";
+              input.name = "delete_index";
+              input.value = idx;
+              form.appendChild(input);
+              document.body.appendChild(form);
+              form.submit();
+          }}
+      }}
+      </script>
+    </body>
+    </html>
+    """)
+    
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("User interrupted the script. Exiting.")
+        add_script_log("Server exited via KeyboardInterrupt.")
+    except Exception as e:
+        logging.error(f"Unhandled error in main: {e}")
+        add_script_log(f"Unhandled error: {e}")
+        print("Encountered an error. Exiting...")
