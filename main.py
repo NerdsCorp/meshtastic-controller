@@ -1858,26 +1858,25 @@ def root():
 def config_editor():
     config = safe_load_json(CONFIG_PATH, {})
     if request.method == "POST":
-        # Update config from form fields
-        for key in config.keys():
-            value = request.form.get(key)
-            if isinstance(config[key], bool):
-                config[key] = (value == "on")
-            elif isinstance(config[key], int):
-                try:
-                    config[key] = int(value)
-                except ValueError:
-                    pass
-            elif isinstance(config[key], dict):
-                try:
-                    config[key] = json.loads(value)
-                except Exception:
-                    config[key] = {}
-            else:
-                config[key] = value
-        save_config(config)
-        return redirect(url_for('config_editor'))
-
+    for key in config.keys():
+        value = request.form.get(key)
+        if isinstance(config[key], bool):
+            config[key] = (value == "on")
+        elif isinstance(config[key], int):
+            try:
+                config[key] = int(value)
+            except ValueError:
+                pass
+        elif isinstance(config[key], dict):
+            try:
+                config[key] = json.loads(value)
+            except Exception:
+                config[key] = {}
+        else:
+            config[key] = value
+    save_config(config)
+    return redirect(url_for('config_editor'))
+    
     # Render each config option as an input
     form_fields = ""
 for key, value in config.items():
