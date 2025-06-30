@@ -182,6 +182,14 @@ timezone_obj = pytz.timezone(timezone_str)
 print(f"Timezone set to: {timezone_str}")
 add_script_log(f"Timezone set to: {timezone_str}")
 commands_config = safe_load_json(COMMANDS_CONFIG_FILE, {"commands": []})
+
+def reload_config():
+    global config
+    config = safe_load_json(CONFIG_FILE, {})
+    print("Config reloaded:", config)
+    # re-assign any other globals here if needed
+    # e.g. global AI_PROVIDER; AI_PROVIDER = config.get("ai_provider", "lmstudio").lower()
+
 try:
     with open(MOTD_FILE, "r", encoding="utf-8") as f:
         motd_content = f.read()
@@ -1856,6 +1864,8 @@ def root():
 
 @app.route("/config", methods=["GET", "POST"])
 def config_editor():
+    global config  # Ensure we update the global config
+
     # Load config (make sure CONFIG_PATH is defined, e.g. CONFIG_PATH = "config/config.json")
     config = safe_load_json(CONFIG_PATH, {})
 
@@ -1878,6 +1888,7 @@ def config_editor():
             else:
                 config[key] = value
         save_config(config)
+        reload_config()  # <--- ADD THIS LINE!
         return redirect(url_for('config_editor'))
 
     # Render each config option as an input
