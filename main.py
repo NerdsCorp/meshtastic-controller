@@ -1405,6 +1405,7 @@ function dmToNode(nodeId, shortName) {
   <div class="header-buttons">
     <a href="/instructions">Instructions</a>
     <a href="/config">Edit Config</a>
+    <a href="/commands">Edit Commands</a>
     <a href="/logs" target="_blank">Logs</a>
   </div>
   <div id="flashDiv" style="display:none;">NEW MESSAGE!</div>
@@ -1822,6 +1823,7 @@ def instructions():
     <ul>
         <li>Make sure that if you have not already edit you config file.</li>
         <a href="/config">Edit Config</a>
+        <a href="/commands">Edit Commands</a>
     <ul>
 
 
@@ -2000,6 +2002,7 @@ def config_editor():
         <span><a href="{{{{ url_for('dashboard') }}}}">🡨 Dashboard</a></span>
         <span>
           <a href="{{{{ url_for('instructions') }}}}">Instructions</a>
+          <a href="/commands">Edit Commands</a>
           <a href="{{{{ url_for('logs') }}}}" target="_blank">Logs</a>
         </span>
       </div>
@@ -2015,6 +2018,123 @@ def config_editor():
     </html>
     """)
 
+@app.route("/commands", methods=["GET", "POST"])
+def commands_editor():
+    config = safe_load_json(COMMANDS_CONFIG_FILE, {"commands": []})
+
+    # Handle POST: Save changes, delete, or add empty rows
+    if request.method == "POST":
+        # Handle deletion via JS-generated POST
+        if "delete_index" in request.form:
+            idx = int(request.form["delete_index"])
+            if 0 <= idx < len(config["commands"]):
+                del config["commands"][idx]
+                save_commands_config(config)
+                return redirect(url_for("commands_editor"))
+
+        # Save all commands
+        new_commands = []
+        total = int(request.form.get("total_commands", "0"))
+        for i in range(total):
+            command = request.form.get(f"command_{i}", "").strip()
+            ai_prompt = request.form.get(f"ai_prompt_{i}", "").strip()
+            response = request.form.get(f"response_{i}", "").strip()
+            if command:
+                entry = {"command": command}
+                if ai_prompt:
+                    entry["ai_prompt"] = ai_prompt
+                if response:
+                    entry["response"] = response
+                new_commands.append(entry)
+        config["commands"] = new_commands
+        save_commands_config(config)
+        return render_template_string("""
+        <script>alert('Commands saved!'); window.location.href='/commands';</script>
+        """)
+
+    # How many empty rows to show (default: 1, or more if requested)
+    try:
+        add_rows = int(request.args.get("add_rows", "1"))
+    except Exception:
+        add_rows = 1
+
+    # Render the form fields
+    form_fields = ""
+    for i, cmd in enumerate(config.get("commands", [])):
+        form_fields += f"""
+        <div style='margin-bottom:20px; border:1px solid #ccc; padding:10px;'>
+          <label>Command: <input type='text' name='command_{i}' value="{cmd.get('command','')}" /></label><br>
+          <label>AI Prompt: <input type='text' name='ai_prompt_{i}' value="{cmd.get('ai_prompt','')}" /></label><br>
+          <label>Response: <input type='text' name='response_{i}' value="{cmd.get('response','')}" /></label><br>
+          <button type="button" onclick="deleteCommand({i})" style="background:#ff4444;color:#fff;border:none;padding:4px 16px;margin-top:8px; border-radius:4px;">Delete</button>
+        </div>
+        """
+
+    # Add empty rows for new commands
+    total_commands = len(config.get("commands", []))
+    for j in range(add_rows):
+        idx = total_commands + j
+        form_fields += f"""
+        <div style='margin-bottom:20px; border:1px dashed #ffa500; padding:10px;'>
+          <label>Command: <input type='text' name='command_{idx}' /></label><br>
+          <label>AI Prompt: <input type='text' name='ai_prompt_{idx}' /></label><br>
+          <label>Response: <input type='text' name='response_{idx}' /></label><br>
+        </div>
+        """
+
+    total_commands += add_rows
+
+    # Main output
+    return render_template_string(f"""
+    <html>
+    <head>
+      <title>Edit Commands Config</title>
+      <style>
+        body {{ background: #000; color: #fff; font-family: Arial; }}
+        .container {{ max-width: 600px; margin:40px auto; background:#111; padding:30px; border-radius:12px; border:2px solid #ffa500; }}
+        label {{ display:block; margin-top:8px; }}
+        input[type="text"] {{ width:90%; padding:5px; margin-bottom:8px; border-radius:4px; border:1px solid #ffa500; background:#222; color:#fff; }}
+        button {{ background:#ffa500; color:#000; border:none; border-radius:4px; padding:8px 24px; margin-top:16px; font-size:1em; cursor:pointer; }}
+        .delete-btn {{ background:#ff4444; color:#fff; border:none; padding:4px 16px; margin-top:8px; border-radius:4px; }}
+        a {{ color:#ffa500; }}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>Edit Commands Config</h1>
+        <form method="post">
+            {form_fields}
+            <input type="hidden" name="total_commands" value="{total_commands}">
+            <button type="submit">Save Commands</button>
+        </form>
+        <form method="get" style="margin-top:20px;">
+            <label>Add more empty rows:
+                <input type="number" name="add_rows" min="1" max="10" value="1" style="width:60px;">
+            </label>
+            <button type="submit">Add Rows</button>
+        </form>
+        <a href='/dashboard'>← Back to Dashboard</a>
+      </div>
+      <script>
+      function deleteCommand(idx) {{
+          if(confirm("Are you sure you want to delete this command?")) {{
+              var form = document.createElement("form");
+              form.method = "POST";
+              form.style.display = "none";
+              var input = document.createElement("input");
+              input.type = "hidden";
+              input.name = "delete_index";
+              input.value = idx;
+              form.appendChild(input);
+              document.body.appendChild(form);
+              form.submit();
+          }}
+      }}
+      </script>
+    </body>
+    </html>
+    """)
+    
 if __name__ == "__main__":
     try:
         main()
