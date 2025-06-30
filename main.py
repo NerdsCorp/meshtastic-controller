@@ -91,7 +91,6 @@ log = logging.getLogger('werkzeug')
 log.disabled = True
 
 BANNER = (
-    "\033[38;5;214m"
     """
     
 MMMMMMMM               MMMMMMMM                                     hhhhhhh                      tttt                                                      tttt            iiii                           
@@ -136,20 +135,15 @@ C:::::C              o::::o     o::::o  n::::n    n::::n      t:::::t           
      CCC::::::::::::C oo:::::::::::oo   n::::n    n::::n        tt:::::::::::tt r:::::r             oo:::::::::::oo l::::::ll::::::l  ee:::::::::::::e   r:::::r                                          
         CCCCCCCCCCCCC   ooooooooooo     nnnnnn    nnnnnn          ttttttttttt   rrrrrrr               ooooooooooo   llllllllllllllll    eeeeeeeeeeeeee   rrrrrrr                                          
                                                                                                                                                                                                           
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                                                                                                                                                                 
+                                                                                                                                                                                                                                                                                                                                                                                                                    
 Version 1.0 by: Dr.Reeves (https://www.nerdscorp.net)
-    \033[32m 
-Messaging Dashboard Access: http://localhost:5000/dashboard \033[38;5;214m
-"""
-    "\033[0m"
-    "\033[31m"
+     
+Messaging Dashboard Access: http://localhost:5000/dashboard 
+"""   
     """
 """
-    "\033[0m"
+    
 )
 print(BANNER)
 add_script_log("Script started.")
@@ -178,6 +172,8 @@ def safe_load_json(path, default_value):
 config = safe_load_json(CONFIG_FILE, {})
 timezone_str = config.get("timezone", "UTC")  # Default to UTC if not set
 timezone_obj = pytz.timezone(timezone_str)
+print(f"Timezone set to: {timezone_str}")
+add_script_log(f"Timezone set to: {timezone_str}")
 commands_config = safe_load_json(COMMANDS_CONFIG_FILE, {"commands": []})
 try:
     with open(MOTD_FILE, "r", encoding="utf-8") as f:
