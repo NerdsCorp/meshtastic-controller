@@ -68,7 +68,7 @@
   "discord_webhook_url": "",
   "discord_send_emergency": false,
   "discord_send_ai": false,
-  "discord_send_all": false
+  "discord_send_all": false,
   "discord_presence_status": "online",
   "discord_presence_activity": "Meshtastic-Controller Online"
 }
