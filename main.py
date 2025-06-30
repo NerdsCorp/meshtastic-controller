@@ -1860,29 +1860,39 @@ def config_editor():
     if request.method == "POST":
         # Update config from form fields
         for key in config.keys():
-            value = request.form.get(key)
-            # Type conversion for booleans and numbers as needed
-            if isinstance(config[key], bool):
-                config[key] = (value == "on")
-            elif isinstance(config[key], int):
-                try:
-                    config[key] = int(value)
-                except ValueError:
-                    pass
-            else:
-                config[key] = value
+    value = request.form.get(key)
+    if isinstance(config[key], bool):
+        config[key] = (value == "on")
+    elif isinstance(config[key], int):
+        try:
+            config[key] = int(value)
+        except ValueError:
+            pass
+    elif isinstance(config[key], dict):
+        try:
+            config[key] = json.loads(value)
+        except Exception:
+            config[key] = {}
+    else:
+        config[key] = value
         save_config(config)
         return redirect(url_for('config_editor'))
 
     # Render each config option as an input
     form_fields = ""
-    for key, value in config.items():
-        if isinstance(value, bool):
-            checked = "checked" if value else ""
-            field = f'<label style="margin-right:20px;">{key}: <input type="checkbox" name="{key}" {checked}></label><br>'
-        else:
-            field = f'<label style="margin-right:20px;">{key}: <input type="text" name="{key}" value="{value}"></label><br>'
-        form_fields += field
+for key, value in config.items():
+    if isinstance(value, bool):
+        checked = "checked" if value else ""
+        field = f'<label style="margin-right:20px;">{key}: <input type="checkbox" name="{key}" {checked}></label><br>'
+    elif isinstance(value, int):
+        field = f'<label style="margin-right:20px;">{key}: <input type="text" name="{key}" value="{value}"></label><br>'
+    elif isinstance(value, dict):
+        # Show dict as multiline JSON textarea
+        field = f'''<label style="margin-right:20px;">{key}:<br>
+        <textarea name="{key}" rows="6" cols="60">{json.dumps(value, indent=2)}</textarea></label><br>'''
+    else:
+        field = f'<label style="margin-right:20px;">{key}: <input type="text" name="{key}" value="{value}"></label><br>'
+    form_fields += field
 
     return render_template_string(f"""
     <html>
