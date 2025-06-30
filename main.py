@@ -234,6 +234,7 @@ DISCORD_RECEIVE_ENABLED = config.get("discord_receive_enabled", True)
 DISCORD_INBOUND_CHANNEL_INDEX = config.get("discord_inbound_channel_index", None)
 if DISCORD_INBOUND_CHANNEL_INDEX is not None:
     DISCORD_INBOUND_CHANNEL_INDEX = int(DISCORD_INBOUND_CHANNEL_INDEX)
+ENABLE_DISCORD_WEBHOOK = config.get("enable_discord_webhook", False)
 # For polling Discord messages (optional)
 DISCORD_BOT_TOKEN = config.get("discord_bot_token", None)
 DISCORD_CHANNEL_ID = config.get("discord_channel_id", None)
@@ -541,7 +542,7 @@ def get_ai_response(prompt):
         return None
 
 def send_discord_message(content):
-    if not (ENABLE_DISCORD and DISCORD_WEBHOOK_URL):
+    if not (ENABLE_DISCORD and ENABLE_DISCORD_WEBHOOK and DISCORD_WEBHOOK_URL):
         return
     try:
         requests.post(DISCORD_WEBHOOK_URL, json={"content": content})
