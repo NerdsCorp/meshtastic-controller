@@ -1859,7 +1859,7 @@ def config_editor():
     config = safe_load_json(CONFIG_PATH, {})
     if request.method == "POST":
         # Update config from form fields
-        for key in config.keys():
+for key in config.keys():
     value = request.form.get(key)
     if isinstance(config[key], bool):
         config[key] = (value == "on")
