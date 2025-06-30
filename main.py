@@ -1022,11 +1022,10 @@ def dashboard():
       z-index: 250;
       font-size: 36px;
     }
-    #ticker p {
-      display: inline-block;
-      margin: 0;
-      animation: tickerScroll 30s linear infinite;
+    #ticker {
+      display: none;
     }
+
     @keyframes tickerScroll {
       0%   { transform: translateX(100%); }
       100% { transform: translateX(-100%); }
