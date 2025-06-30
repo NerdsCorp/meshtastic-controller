@@ -1395,6 +1395,7 @@ function dmToNode(nodeId, shortName) {
   <div id="connectionStatus"></div>
   <div class="header-buttons">
     <a href="/instructions">Instructions</a>
+    <a href="/config">Edit Config</a>
     <a href="/logs" target="_blank">Logs</a>
   </div>
   <div id="flashDiv" style="display:none;">NEW MESSAGE!</div>
@@ -1807,6 +1808,13 @@ def instructions():
       <li>Trigger an emergency alert with <code>/emergency &lt;message&gt;</code> or <code>/911 &lt;message&gt;</code>. Alerts go via Twilio, SMTP, and Discord if enabled, including GPS and timestamps.</li>
       <li>Send SMS via <code>/sms &lt;+15555555555&gt; &lt;message&gt;</code>.</li>
     </ul>
+
+    <h2>Config</h2>
+    <ul>
+        <li>Make sure that if you have not already edit you config file.</li>
+        <a href="/config">Edit Config</a>
+    <ul>
+
 
     <h2>🏠 Home Assistant Integration</h2>
     <ul>
