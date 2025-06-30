@@ -1893,16 +1893,12 @@ def config_editor():
     """)
 
 if __name__ == "__main__":
-    while True:
-        try:
-            main()
-        except KeyboardInterrupt:
-            print("User interrupted the script. Exiting.")
-            add_script_log("Server exited via KeyboardInterrupt.")
-            break
-        except Exception as e:
-            logging.error(f"Unhandled error in main: {e}")
-            add_script_log(f"Unhandled error: {e}")
-            print("Encountered an error. Restarting in 30 seconds...")
-            time.sleep(30)
-
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("User interrupted the script. Exiting.")
+        add_script_log("Server exited via KeyboardInterrupt.")
+    except Exception as e:
+        logging.error(f"Unhandled error in main: {e}")
+        add_script_log(f"Unhandled error: {e}")
+        print("Encountered an error. Exiting...")
