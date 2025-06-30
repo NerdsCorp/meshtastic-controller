@@ -21,6 +21,7 @@ import asyncio
 import discord
 import pytz
 from datetime import datetime
+from flask import render_template_string, request, redirect, url_for
 
 # -----------------------------
 # Verbose Logging Setup
@@ -152,6 +153,7 @@ add_script_log("Script started.")
 # Load Config Files
 # -----------------------------
 CONFIG_FILE = "config/config.json"
+CONFIG_PATH = "config/config.json"
 COMMANDS_CONFIG_FILE = "config/commands_config.json"
 MOTD_FILE = "config/motd.json"
 LOG_FILE = "config/messages.log"
@@ -168,6 +170,10 @@ def safe_load_json(path, default_value):
     except Exception as e:
         print(f"⚠️ Could not load {path}: {e}")
     return default_value
+
+def save_config(cfg):
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, indent=2)
 
 config = safe_load_json(CONFIG_FILE, {})
 timezone_str = config.get("timezone", "UTC")  # Default to UTC if not set
@@ -1838,6 +1844,45 @@ def instructions():
 @app.route("/", methods=["GET"])
 def root():
     return redirect(url_for("instructions"))
+
+@app.route("/config", methods=["GET", "POST"])
+def config_editor():
+    config = safe_load_json(CONFIG_PATH, {})
+    if request.method == "POST":
+        # Update config from form fields
+        for key in config.keys():
+            value = request.form.get(key)
+            # Type conversion for booleans and numbers as needed
+            if isinstance(config[key], bool):
+                config[key] = (value == "on")
+            elif isinstance(config[key], int):
+                try:
+                    config[key] = int(value)
+                except ValueError:
+                    pass
+            else:
+                config[key] = value
+        save_config(config)
+        return redirect(url_for('config_editor'))
+
+    # Render each config option as an input
+    form_fields = ""
+    for key, value in config.items():
+        if isinstance(value, bool):
+            checked = "checked" if value else ""
+            field = f'<label>{key}: <input type="checkbox" name="{key}" {checked}></label><br>'
+        else:
+            field = f'<label>{key}: <input type="text" name="{key}" value="{value}"></label><br>'
+        form_fields += field
+
+    return render_template_string(f"""
+        <h1>Edit Config</h1>
+        <form method="post">
+            {form_fields}
+            <button type="submit">Save</button>
+        </form>
+        <a href="{{{{ url_for('dashboard') }}}}">Back to Dashboard</a>
+    """)
 
 if __name__ == "__main__":
     while True:
