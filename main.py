@@ -980,7 +980,7 @@ def dashboard():
       color: #fff;
       font-family: Arial, sans-serif;
       margin: 0;
-      padding-top: 120px;
+      padding-top: 40px;
       transition: filter 0.5s linear;
     }
     #connectionStatus {
