@@ -193,6 +193,11 @@ def reload_config():
     # re-assign any other globals here if needed
     # e.g. global AI_PROVIDER; AI_PROVIDER = config.get("ai_provider", "lmstudio").lower()
 
+def save_commands_config(config):
+    import json
+    with open(COMMANDS_CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=2, ensure_ascii=False)
+
 try:
     with open(MOTD_FILE, "r", encoding="utf-8") as f:
         motd_content = f.read()
