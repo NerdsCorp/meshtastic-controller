@@ -1889,7 +1889,20 @@ def config_editor():
                 config[key] = value
         save_config(config)
         reload_config()  # <--- ADD THIS LINE!
-        return redirect(url_for('config_editor'))
+         # Instead of redirect, render a template with a JS alert and redirect
+        return render_template_string("""
+        <html>
+        <head>
+        <script>
+            alert('You need to restart the server for changes to take effect.');
+            window.location.href = '/config';
+        </script>
+        </head>
+        <body>
+            <p>Config saved. You need to restart.</p>
+        </body>
+        </html>
+        """)
 
     # Render each config option as an input
     form_fields = ""
