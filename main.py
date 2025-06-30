@@ -832,6 +832,7 @@ def connection_status_info():
 def logs():
     uptime = datetime.now(timezone.utc) - server_start_time
     uptime_str = str(uptime).split('.')[0]
+    log_entries = '\n'.join(script_logs)
     html = f"""<html>
 <head>
   <title>Meshtastic Controller Logs</title>
@@ -868,9 +869,11 @@ def logs():
     <p><a href="/dashboard">Back to Dashboard</a></p>
   </div>
   <h2>Log Entries</h2>
-  <pre>{"\n".join(script_logs)}</pre>
+  <pre>{log_entries}</pre>
 </body>
-</html>"""
+</html>
+
+    """
     return html
 
 # -----------------------------
@@ -1845,3 +1848,4 @@ if __name__ == "__main__":
             add_script_log(f"Unhandled error: {e}")
             print("Encountered an error. Restarting in 30 seconds...")
             time.sleep(30)
+
