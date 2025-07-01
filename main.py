@@ -827,48 +827,53 @@ def logs():
     uptime = datetime.now(timezone.utc) - server_start_time
     uptime_str = str(uptime).split('.')[0]
     log_entries = '\n'.join(script_logs)
-    html = f"""<html>
-<head>
-  <title>Meshtastic Controller Logs</title>
-  <style>
-    body {{
-      background: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }}
-    h1, h2 {{
-      color: var(--theme-color);
-    }}
-    pre {{
-      background: #111;
-      padding: 10px;
-      border: 1px solid var(--theme-color);
-      overflow-x: auto;
-    }}
-    .summary {{
-      margin-bottom: 20px;
-    }}
-    a {{
-      color: var(--theme-color);
-      text-decoration: none;
-    }}
-  </style>
-</head>
-<body>
-  <h1>Script Logs</h1>
-  <div class="summary">
-    <p><strong>Uptime:</strong> {uptime_str}</p>
-    <p><strong>Restarts (since current launch):</strong> {restart_count}</p>
-    <p><a href="/dashboard">Back to Dashboard</a></p>
-  </div>
-  <h2>Log Entries</h2>
-  <pre>{log_entries}</pre>
-</body>
-</html>
-
+    html = """
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Meshtastic Controller Logs</title>
+      <style>
+        body {
+          background: #000;
+          color: #fff;
+          font-family: Arial, sans-serif;
+          padding: 20px;
+        }
+        h1, h2 {
+          color: var(--theme-color);
+        }
+        pre {
+          background: #111;
+          padding: 10px;
+          border: 1px solid var(--theme-color);
+          overflow-x: auto;
+        }
+        .summary {
+          margin-bottom: 20px;
+        }
+        a {
+          color: var(--theme-color);
+          text-decoration: none;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Script Logs</h1>
+      <div class="summary">
+        <p><strong>Uptime:</strong> {{ uptime_str }}</p>
+        <p><strong>Restarts (since current launch):</strong> {{ restart_count }}</p>
+        <p><a href="/dashboard">Back to Dashboard</a></p>
+      </div>
+      <h2>Log Entries</h2>
+      <pre>{{ log_entries | e }}</pre>
+    </body>
+    </html>
     """
-    return html
+    return render_template_string(html,
+        uptime_str=uptime_str,
+        restart_count=restart_count,
+        log_entries=log_entries
+    )
 
 # -----------------------------
 # Revised Discord Webhook Route for Inbound Messages
