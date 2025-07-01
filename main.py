@@ -1452,6 +1452,31 @@ def dashboard():
       if(chunks > 5) { chunks = 5; }
       document.getElementById('charCounter').textContent = "Characters: " + count + "/1000, Chunks: " + chunks + "/5";
     }
+
+    function sendMessage() {
+    var message = document.getElementById('messageBox').value;
+    var isDM = document.getElementById('modeSwitch').checked;
+    var data = new FormData();
+    data.append('message', message);
+
+    if (isDM) {
+        var destNode = document.getElementById('destNode').value;
+        data.append('destination_node', destNode);
+    } else {
+        var channelIdx = document.getElementById('channelSel').value;
+        data.append('channel_index', channelIdx);
+    }
+
+    fetch('/ui_send', {
+        method: 'POST',
+        body: data
+    }).then(function(response){
+        if(response.redirected){
+            window.location.href = response.url;
+        }
+    });
+}
+    
   </script>
 </head>
 <body>
@@ -1502,7 +1527,7 @@ def dashboard():
     <div id="charCounter">Characters: 0/1000, Chunks: 0/5</div>
     <br/>
     <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-      <button type="submit">Send</button>
+      <button type="button" onclick="sendMessage()">Send</button>
       <button type="button" onclick="replyToLastDM()">Reply to Last DM</button>
       <button type="button" onclick="replyToLastChannel()">Reply to Last Channel</button>
     </div>
