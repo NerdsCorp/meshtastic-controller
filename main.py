@@ -22,6 +22,7 @@ import discord
 import pytz
 from datetime import datetime
 from flask import render_template_string, request, redirect, url_for
+from flask import jsonify
 
 # -----------------------------
 # Verbose Logging Setup
@@ -1470,11 +1471,18 @@ def dashboard():
     fetch('/ui_send', {
         method: 'POST',
         body: data
-    }).then(function(response){
-        if(response.redirected){
-            window.location.href = response.url;
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('messageBox').value = '';
+            document.getElementById('charCounter').textContent = "Characters: 0/1000, Chunks: 0/5";
+            alert("Message sent!");
+        } else {
+            alert("Error: " + (data.error || "Unknown error"));
         }
-    });
+    })
+    .catch(error => alert("Network error: " + error));
 }
     
   </script>
@@ -1596,7 +1604,7 @@ def ui_send():
     else:
         channel_idx = None
     if not message:
-        return redirect(url_for("dashboard"))
+        return jsonify({"success": False, "error": "No message provided."})
     try:
         if mode == "direct" and dest_node:
             dest_info = f"{get_node_shortname(dest_node)} ({dest_node})"
@@ -1607,9 +1615,10 @@ def ui_send():
             log_message("WebUI", f"{message} [to: Broadcast Channel {channel_idx}]", direct=False, channel_idx=channel_idx)
             info_print(f"[UI] Broadcast on channel {channel_idx} => '{message}'")
             send_broadcast_chunks(interface, message, channel_idx)
+        return jsonify({"success": True})
     except Exception as e:
         print(f"⚠️ /ui_send error: {e}")
-    return redirect(url_for("dashboard"))
+        return jsonify({"success": False, "error": str(e)})
 
 @app.route("/send", methods=["POST"])
 def send_message():
