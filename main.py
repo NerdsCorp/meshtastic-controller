@@ -96,55 +96,21 @@ BANNER = (
     """
     """
     """
-
-
-
-MMMMMMMM               MMMMMMMM                                     hhhhhhh                      tttt                                                      tttt            iiii                           
-M:::::::M             M:::::::M                                     h:::::h                   ttt:::t                                                   ttt:::t           i::::i                          
-M::::::::M           M::::::::M                                     h:::::h                   t:::::t                                                   t:::::t            iiii                           
-M:::::::::M         M:::::::::M                                     h:::::h                   t:::::t                                                   t:::::t                                           
-M::::::::::M       M::::::::::M    eeeeeeeeeeee        ssssssssss    h::::h hhhhh       ttttttt:::::ttttttt      aaaaaaaaaaaaa       ssssssssss   ttttttt:::::ttttttt    iiiiiii     cccccccccccccccc     
-M:::::::::::M     M:::::::::::M  ee::::::::::::ee    ss::::::::::s   h::::hh:::::hhh    t:::::::::::::::::t      a::::::::::::a    ss::::::::::s  t:::::::::::::::::t    i:::::i   cc:::::::::::::::c     
-M:::::::M::::M   M::::M:::::::M e::::::eeeee:::::eess:::::::::::::s  h::::::::::::::hh  t:::::::::::::::::t      aaaaaaaaa:::::a ss:::::::::::::s t:::::::::::::::::t     i::::i  c:::::::::::::::::c     
-M::::::M M::::M M::::M M::::::Me::::::e     e:::::es::::::ssss:::::s h:::::::hhh::::::h tttttt:::::::tttttt               a::::a s::::::ssss:::::stttttt:::::::tttttt     i::::i c:::::::cccccc:::::c     
-M::::::M  M::::M::::M  M::::::Me:::::::eeeee::::::e s:::::s  ssssss  h::::::h   h::::::h      t:::::t              aaaaaaa:::::a  s:::::s  ssssss       t:::::t           i::::i c::::::c     ccccccc     
-M::::::M   M:::::::M   M::::::Me:::::::::::::::::e    s::::::s       h:::::h     h:::::h      t:::::t            aa::::::::::::a    s::::::s            t:::::t           i::::i c:::::c                  
-M::::::M    M:::::M    M::::::Me::::::eeeeeeeeeee        s::::::s    h:::::h     h:::::h      t:::::t           a::::aaaa::::::a       s::::::s         t:::::t           i::::i c:::::c                  
-M::::::M     MMMMM     M::::::Me:::::::e           ssssss   s:::::s  h:::::h     h:::::h      t:::::t    tttttta::::a    a:::::a ssssss   s:::::s       t:::::t    tttttt i::::i c::::::c     ccccccc     
-M::::::M               M::::::Me::::::::e          s:::::ssss::::::s h:::::h     h:::::h      t::::::tttt:::::ta::::a    a:::::a s:::::ssss::::::s      t::::::tttt:::::ti::::::ic:::::::cccccc:::::c     
-M::::::M               M::::::M e::::::::eeeeeeee  s::::::::::::::s  h:::::h     h:::::h      tt::::::::::::::ta:::::aaaa::::::a s::::::::::::::s       tt::::::::::::::ti::::::i c:::::::::::::::::c     
-M::::::M               M::::::M  ee:::::::::::::e   s:::::::::::ss   h:::::h     h:::::h        tt:::::::::::tt a::::::::::aa:::a s:::::::::::ss          tt:::::::::::tti::::::i  cc:::::::::::::::c     
-MMMMMMMM               MMMMMMMM    eeeeeeeeeeeeee    sssssssssss     hhhhhhh     hhhhhhh          ttttttttttt    aaaaaaaaaa  aaaa  sssssssssss              ttttttttttt  iiiiiiii    cccccccccccccccc     
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                          
-        CCCCCCCCCCCCC                                            tttt                                               lllllll lllllll                                                                       
-     CCC::::::::::::C                                         ttt:::t                                               l:::::l l:::::l                                                                       
-   CC:::::::::::::::C                                         t:::::t                                               l:::::l l:::::l                                                                       
-  C:::::CCCCCCCC::::C                                         t:::::t                                               l:::::l l:::::l                                                                       
- C:::::C       CCCCCC   ooooooooooo   nnnn  nnnnnnnn    ttttttt:::::ttttttt    rrrrr   rrrrrrrrr      ooooooooooo    l::::l  l::::l     eeeeeeeeeeee    rrrrr   rrrrrrrrr                                 
-C:::::C               oo:::::::::::oo n:::nn::::::::nn  t:::::::::::::::::t    r::::rrr:::::::::r   oo:::::::::::oo  l::::l  l::::l   ee::::::::::::ee  r::::rrr:::::::::r                                
-C:::::C              o:::::::::::::::on::::::::::::::nn t:::::::::::::::::t    r:::::::::::::::::r o:::::::::::::::o l::::l  l::::l  e::::::eeeee:::::eer:::::::::::::::::r                               
-C:::::C              o:::::ooooo:::::onn:::::::::::::::ntttttt:::::::tttttt    rr::::::rrrrr::::::ro:::::ooooo:::::o l::::l  l::::l e::::::e     e:::::err::::::rrrrr::::::r                              
-C:::::C              o::::o     o::::o  n:::::nnnn:::::n      t:::::t           r:::::r     r:::::ro::::o     o::::o l::::l  l::::l e:::::::eeeee::::::e r:::::r     r:::::r                              
-C:::::C              o::::o     o::::o  n::::n    n::::n      t:::::t           r:::::r     rrrrrrro::::o     o::::o l::::l  l::::l e:::::::::::::::::e  r:::::r     rrrrrrr                              
-C:::::C              o::::o     o::::o  n::::n    n::::n      t:::::t           r:::::r            o::::o     o::::o l::::l  l::::l e::::::eeeeeeeeeee   r:::::r                                          
- C:::::C       CCCCCCo::::o     o::::o  n::::n    n::::n      t:::::t    tttttt r:::::r            o::::o     o::::o l::::l  l::::l e:::::::e            r:::::r                                          
-  C:::::CCCCCCCC::::Co:::::ooooo:::::o  n::::n    n::::n      t::::::tttt:::::t r:::::r            o:::::ooooo:::::ol::::::ll::::::le::::::::e           r:::::r                                          
-   CC:::::::::::::::Co:::::::::::::::o  n::::n    n::::n      tt::::::::::::::t r:::::r            o:::::::::::::::ol::::::ll::::::l e::::::::eeeeeeee   r:::::r                                          
-     CCC::::::::::::C oo:::::::::::oo   n::::n    n::::n        tt:::::::::::tt r:::::r             oo:::::::::::oo l::::::ll::::::l  ee:::::::::::::e   r:::::r                                          
-        CCCCCCCCCCCCC   ooooooooooo     nnnnnn    nnnnnn          ttttttttttt   rrrrrrr               ooooooooooo   llllllllllllllll    eeeeeeeeeeeeee   rrrrrrr                                          
-                                                                                                                                                                                                          
-                                                                                                                                                                                                                                                                                                                                                                                                                 
-                                                                                                                                                                                                                                                                                                                                                                                                                    
-Version 1.0 by: Dr.Reeves (https://www.nerdscorp.net)
-     
+███╗   ███╗███████╗███████╗██╗  ██╗████████╗ █████╗ ███████╗████████╗██╗ ██████╗     
+████╗ ████║██╔════╝██╔════╝██║  ██║╚══██╔══╝██╔══██╗██╔════╝╚══██╔══╝██║██╔════╝     
+██╔████╔██║█████╗  ███████╗███████║   ██║   ███████║███████╗   ██║   ██║██║          
+██║╚██╔╝██║██╔══╝  ╚════██║██╔══██║   ██║   ██╔══██║╚════██║   ██║   ██║██║          
+██║ ╚═╝ ██║███████╗███████║██║  ██║   ██║   ██║  ██║███████║   ██║   ██║╚██████╗     
+╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚══════╝   ╚═╝   ╚═╝ ╚═════╝     
+                                                                                     
+ ██████╗ ██████╗ ███╗   ██╗████████╗██████╗  ██████╗ ██╗     ██╗     ███████╗██████╗ 
+██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝██╔══██╗██╔═══██╗██║     ██║     ██╔════╝██╔══██╗
+██║     ██║   ██║██╔██╗ ██║   ██║   ██████╔╝██║   ██║██║     ██║     █████╗  ██████╔╝
+██║     ██║   ██║██║╚██╗██║   ██║   ██╔══██╗██║   ██║██║     ██║     ██╔══╝  ██╔══██╗
+╚██████╗╚██████╔╝██║ ╚████║   ██║   ██║  ██║╚██████╔╝███████╗███████╗███████╗██║  ██║
+ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+Version 2.0 by: Dr.Reeves https://www.nerdscorp.net   
 Messaging Dashboard Access: http://localhost:5000/dashboard 
 """   
     """
