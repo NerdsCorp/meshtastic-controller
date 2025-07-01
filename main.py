@@ -92,10 +92,7 @@ except ImportError:
 log = logging.getLogger('werkzeug')
 log.disabled = True
 
-BANNER = (
-    """
-    """
-    """
+BANNER = """
 ███╗   ███╗███████╗███████╗██╗  ██╗████████╗ █████╗ ███████╗████████╗██╗ ██████╗     
 ████╗ ████║██╔════╝██╔════╝██║  ██║╚══██╔══╝██╔══██╗██╔════╝╚══██╔══╝██║██╔════╝     
 ██╔████╔██║█████╗  ███████╗███████║   ██║   ███████║███████╗   ██║   ██║██║          
@@ -112,11 +109,8 @@ BANNER = (
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
 Version 2.0 by: Dr.Reeves https://www.nerdscorp.net   
 Messaging Dashboard Access: http://localhost:5000/dashboard 
-"""   
-    """
+
 """
-    
-)
 print(BANNER)
 add_script_log("Script started.")
 
