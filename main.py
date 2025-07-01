@@ -93,6 +93,9 @@ log = logging.getLogger('werkzeug')
 log.disabled = True
 
 BANNER = """
+.
+.
+.
 ███╗   ███╗███████╗███████╗██╗  ██╗████████╗ █████╗ ███████╗████████╗██╗ ██████╗     
 ████╗ ████║██╔════╝██╔════╝██║  ██║╚══██╔══╝██╔══██╗██╔════╝╚══██╔══╝██║██╔════╝     
 ██╔████╔██║█████╗  ███████╗███████║   ██║   ███████║███████╗   ██║   ██║██║          
@@ -106,10 +109,12 @@ BANNER = """
 ██║     ██║   ██║██║╚██╗██║   ██║   ██╔══██╗██║   ██║██║     ██║     ██╔══╝  ██╔══██╗
 ╚██████╗╚██████╔╝██║ ╚████║   ██║   ██║  ██║╚██████╔╝███████╗███████╗███████╗██║  ██║
  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
 Version 2.0 by: Dr.Reeves https://www.nerdscorp.net   
 Messaging Dashboard Access: http://localhost:5000/dashboard 
-
+.
+.
+.
 """
 print(BANNER)
 add_script_log("Script started.")
@@ -158,6 +163,12 @@ def save_commands_config(config):
     import json
     with open(COMMANDS_CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
+
+def async_send_message(mode, interface, message, dest_node, channel_idx):
+    if mode == "direct" and dest_node:
+        send_direct_chunks(interface, message, dest_node)
+    else:
+        send_broadcast_chunks(interface, message, channel_idx)
 
 try:
     with open(MOTD_FILE, "r", encoding="utf-8") as f:
@@ -1560,26 +1571,29 @@ def dashboard():
 def ui_send():
     message = request.form.get("message", "").strip()
     mode = "direct" if request.form.get("destination_node", "") != "" else "broadcast"
-    if mode == "direct":
-        dest_node = request.form.get("destination_node", "").strip()
-    else:
-        dest_node = None
-    if mode == "broadcast":
-        channel_idx = int(request.form.get("channel_index", "0"))
-    else:
-        channel_idx = None
+    dest_node = request.form.get("destination_node", "").strip() if mode == "direct" else None
+    channel_idx = int(request.form.get("channel_index", "0")) if mode == "broadcast" else None
+
     if not message:
         return jsonify({"success": False, "error": "No message provided."})
+
     try:
+        # Start the sending in a background thread!
+        threading.Thread(
+            target=async_send_message,
+            args=(mode, interface, message, dest_node, channel_idx),
+            daemon=True
+        ).start()
+
+        # Log as "sent" instantly!
         if mode == "direct" and dest_node:
             dest_info = f"{get_node_shortname(dest_node)} ({dest_node})"
             log_message("WebUI", f"{message} [to: {dest_info}]", direct=True)
             info_print(f"[UI] Direct message to node {dest_info} => '{message}'")
-            send_direct_chunks(interface, message, dest_node)
         else:
             log_message("WebUI", f"{message} [to: Broadcast Channel {channel_idx}]", direct=False, channel_idx=channel_idx)
             info_print(f"[UI] Broadcast on channel {channel_idx} => '{message}'")
-            send_broadcast_chunks(interface, message, channel_idx)
+
         return jsonify({"success": True})
     except Exception as e:
         print(f"⚠️ /ui_send error: {e}")
