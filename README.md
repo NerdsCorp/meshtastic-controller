@@ -1,6 +1,7 @@
 # Meshtastic Controller
 
-![image](https://github.com/user-attachments/assets/80c0e830-a070-4231-b330-b208ba4dcc92)
+![image](https://github.com/user-attachments/assets/4974c86b-9e3e-4172-93b7-c5d6abecdff2)
+
 
 
 **Meshtastic Controller** is an experimental project that bridges [Meshtastic](https://meshtastic.org/) LoRa mesh networks with powerful AI chatbots. This release builds on what Meshtastic has given us by introducing a major WebUI overhaul, enhanced error handling with UTC‑based logging, refined command processing (including case‑insensitivity), and expanded integrations for emergency notifications via Twilio, SMTP email, and Discord. You can choose between local models (LM Studio, Ollama), OpenAI, or even integrate with Home Assistant for off‑grid AI assistance.
@@ -40,7 +41,8 @@ Come join the Discord! https://discord.gg/Gsynun57aa
 - **Windows‑Focused - Linux compatibility confirmed!**
   - Official support for Windows environments with installation guides; instructions for Linux available now!
 
-![image](https://github.com/user-attachments/assets/a16235d4-6182-43ec-a9fe-7dfbe880ef69)
+![image](https://github.com/user-attachments/assets/d4f9a0c4-7d77-4ba9-9f1f-482d583ae9f3)
+
 
 
 ---
@@ -120,7 +122,9 @@ Come join the Discord! https://discord.gg/Gsynun57aa
 3. **Access the WebUI Dashboard:**
    - Open your browser and navigate to [http://localhost:5000/](http://localhost:5000/).
 
-![image](https://github.com/user-attachments/assets/de7e9a96-efaa-45cb-8521-3ad7c7c24edb)
+
+![image](https://github.com/user-attachments/assets/70442a16-0182-4f45-ab57-2dc199a8cda1)
+
 
 
 ---
@@ -169,7 +173,12 @@ The Meshtastic-AI server (running on Flask) exposes the following endpoints:
 
 ## Configuration
 
+![image](https://github.com/user-attachments/assets/b899f308-72af-4410-a4cb-ea7dd8b3da8c)
+
+
 Your config.json file controls almost every aspect of Meshtastic-AI. Below is an example configuration that includes both the previous settings and the new options:
+---
+Please always check the file for the most up to date version!!!
 
 json
 {
@@ -408,7 +417,9 @@ json
   - Alternatively, enable "use_mesh_interface" if applicable.
   
 - **Message Routing & Commands:**  
-  - Custom commands can be added in commands_config.json.
+  - Custom commands can be added at [http://localhost:5000/commands](http://localhost:5000/commands))
+![image](https://github.com/user-attachments/assets/e88009fd-633e-4289-a80a-c753be172e94)
+
   - The WebUI Dashboard (accessible at [http://localhost:5000/dashboard](http://localhost:5000/dashboard)) displays messages and node status.
   - The WebUI Instructions (accessible at [http://localhost:5000/instructions](http://localhost:5000/instructions)) displays How to use this program.
   
