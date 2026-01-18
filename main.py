@@ -542,7 +542,7 @@ def send_discord_message(content):
     """Send a message to Discord using the bot client."""
     if not (ENABLE_DISCORD and DISCORD_BOT_TOKEN and DISCORD_CHANNEL_ID):
         return
-    global discord_bot_channel
+    global discord_bot_channel, discord_bot_loop
     if discord_bot_channel is None:
         print("⚠️ Discord bot channel not ready yet")
         return
