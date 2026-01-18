@@ -17,6 +17,10 @@
       "ai_prompt": "{user_input}"
     },
     {
+      "command": "hello",
+      "ai_prompt": "Respond to this greeting in a friendly way: {user_input}"
+    },
+    {
       "command": "/ping",
       "response": "Pong!"
     },
