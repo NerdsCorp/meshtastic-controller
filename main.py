@@ -1649,7 +1649,14 @@ def connection_status_route():
 # Discord Bot Implementation
 def start_discord_bot():
     """Start the Discord bot that handles presence, sending, and receiving messages."""
-    if not config.get("enable_discord", False) or not config.get("discord_bot_token"):
+    global ENABLE_DISCORD, DISCORD_BOT_TOKEN
+
+    if not ENABLE_DISCORD:
+        add_script_log("[Discord Bot] Not starting - Discord is disabled in config")
+        return
+
+    if not DISCORD_BOT_TOKEN:
+        add_script_log("[Discord Bot] Not starting - No bot token configured")
         return
 
     # Set up intents to receive message content
@@ -1703,22 +1710,24 @@ def start_discord_bot():
                 log_message("DiscordBot", formatted, direct=False, channel_idx=DISCORD_INBOUND_CHANNEL_INDEX)
 
                 if interface is None:
-                    print("❌ Cannot send Discord message to mesh: interface is None.")
+                    add_script_log("❌ Cannot send Discord message to mesh: interface is None.")
                 else:
                     send_broadcast_chunks(interface, formatted, DISCORD_INBOUND_CHANNEL_INDEX)
-                    print(f"[Discord Bot] Routed message to mesh: {formatted}")
+                    add_script_log(f"[Discord Bot] Routed message to mesh: {formatted}")
 
     def run_bot():
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         client = MeshtasticDiscordBot(intents=intents)
         try:
-            loop.run_until_complete(client.start(config["discord_bot_token"]))
+            loop.run_until_complete(client.start(DISCORD_BOT_TOKEN))
         except Exception as e:
-            print(f"[Discord Bot] Error: {e}")
+            add_script_log(f"[Discord Bot] Error: {e}")
+            import traceback
+            add_script_log(f"[Discord Bot] Traceback: {traceback.format_exc()}")
 
     threading.Thread(target=run_bot, daemon=True).start()
-    print("[Discord Bot] Started in background thread")
+    add_script_log("[Discord Bot] Started in background thread")
     
 def main():
     global interface, restart_count, server_start_time, reset_event
