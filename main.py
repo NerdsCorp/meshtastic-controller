@@ -261,6 +261,10 @@ lastChannelIndex = None
 discord_bot_channel = None
 discord_bot_loop = None
 
+# AI channel tracking globals
+active_ai_channels = {}  # Track which channels have AI enabled
+AI_CHANNEL_TIMEOUT = 3600  # AI channel auto-disable timeout in seconds (1 hour)
+
 # -----------------------------
 # Location Lookup Function
 # -----------------------------
