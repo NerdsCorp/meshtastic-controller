@@ -677,45 +677,37 @@ def route_message_text(user_message, channel_idx):
 def handle_command(cmd, full_text, sender_id):
     cmd = cmd.lower()
     dprint(f"handle_command => cmd='{cmd}', full_text='{full_text}', sender_id={sender_id}")
-    if cmd == "/about":
+    if cmd == "about":
         return "Meshtastic-Controller Off Grid Chat - By: WWW.NerdsCorp.NET"
-    elif cmd == "/time":
+    elif cmd == "time":
         now = datetime.now(timezone_obj)
         return f"Current time in {timezone_str}: {now.strftime('%Y-%m-%d %H:%M:%S')}"
-    elif cmd in ["/ai", "/bot", "/query", "/data"]:
-        user_prompt = full_text[len(cmd):].strip()
-        if AI_PROVIDER == "home_assistant" and HOME_ASSISTANT_ENABLE_PIN:
-            if not pin_is_valid(user_prompt):
-                return "Security code missing or invalid. Use 'PIN=XXXX'"
-            user_prompt = strip_pin(user_prompt)
-        ai_answer = get_ai_response(user_prompt)
-        return ai_answer if ai_answer else "🤖 [No AI response]"
-    elif cmd == "/whereami":
+    elif cmd == "whereami":
         lat, lon, tstamp = get_node_location(sender_id)
         sn = get_node_shortname(sender_id)
         if lat is None or lon is None:
             return f"🤖 Sorry {sn}, I have no GPS fix for your node."
         tstr = str(tstamp) if tstamp else "Unknown"
         return f"Node {sn} GPS: {lat}, {lon} (time: {tstr})"
-    elif cmd in ["/emergency", "/911"]:
+    elif cmd in ["emergency", "911"]:
         lat, lon, tstamp = get_node_location(sender_id)
-        user_msg = full_text[len(cmd):].strip()
+        user_msg = full_text.strip()
         send_emergency_notification(sender_id, user_msg, lat, lon, tstamp)
         log_message(sender_id, f"EMERGENCY TRIGGERED: {full_text}", is_emergency=True)
         return "🚨 Emergency alert sent. Stay safe."
-    elif cmd == "/test":
+    elif cmd == "test":
         sn = get_node_shortname(sender_id)
         return f"Hello {sn}! Received {LOCAL_LOCATION_STRING} by {AI_NODE_NAME}."
-    elif cmd == "/help":
-        built_in = ["/about", "/query", "/whereami", "/emergency", "/911", "/test", "/motd"]
-        custom_cmds = [c.get("command") for c in commands_config.get("commands",[])]
+    elif cmd == "help":
+        built_in = ["about", "time", "whereami", "emergency", "911", "test", "motd", "sms"]
+        custom_cmds = [c.get("command", "") for c in commands_config.get("commands",[])]
         return "Commands:\n" + ", ".join(built_in + custom_cmds)
-    elif cmd == "/motd":
+    elif cmd == "motd":
         return motd_content
-    elif cmd == "/sms":
+    elif cmd == "sms":
         parts = full_text.split(" ", 2)
         if len(parts) < 3:
-            return "Invalid syntax. Use: /sms <phone_number> <message>"
+            return "Invalid syntax. Use: sms <phone_number> <message>"
         phone_number = parts[1]
         message_text = parts[2]
         try:
@@ -730,24 +722,7 @@ def handle_command(cmd, full_text, sender_id):
         except Exception as e:
             print(f"⚠️ Failed to send SMS: {e}")
             return "Failed to send SMS."
-    for c in commands_config.get("commands", []):
-        config_cmd = c.get("command", "").lower()
-        # Normalize both commands by removing leading '/' for comparison
-        normalized_cmd = cmd.lstrip('/')
-        normalized_config_cmd = config_cmd.lstrip('/')
-        if normalized_config_cmd == normalized_cmd:
-            if "ai_prompt" in c:
-                user_input = full_text[len(cmd):].strip()
-                custom_text = c["ai_prompt"].replace("{user_input}", user_input)
-                if AI_PROVIDER == "home_assistant" and HOME_ASSISTANT_ENABLE_PIN:
-                    if not pin_is_valid(custom_text):
-                        return "Security code missing or invalid."
-                    custom_text = strip_pin(custom_text)
-                ans = get_ai_response(custom_text)
-                return ans if ans else "🤖 [No AI response]"
-            elif "response" in c:
-                return c["response"]
-            return "No configured response for this command."
+    # No match in built-in commands
     return None
 
 def parse_incoming_text(text, sender_id, is_direct, channel_idx):
@@ -777,38 +752,36 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
             dprint(f"AI auto-disabled for channel {channel_idx} (timeout)")
 
     # ----------------------------
-    # 1. /ai on | /ai off
+    # 1. ai on | ai off (special handling)
     # ----------------------------
-    if text_lower.startswith("/ai"):
-        parts = text_lower.split()
-        if len(parts) == 2 and parts[1] == "on":
+    parts = text_lower.split()
+    first_word = parts[0] if parts else ""
+
+    if first_word == "ai" and len(parts) == 2:
+        if parts[1] == "on":
             active_ai_channels[channel_idx] = now
             return "🤖 AI enabled for this channel."
-        if len(parts) == 2 and parts[1] == "off":
+        if parts[1] == "off":
             active_ai_channels.pop(channel_idx, None)
             return "🤖 AI disabled for this channel."
-        return "Usage: /ai on | /ai off"
+        return "Usage: ai on | ai off"
 
     # ----------------------------
-    # 2. Slash commands
+    # 2. Command matching (word-based)
     # ----------------------------
-    if text.startswith("/"):
-        parts = text.split(maxsplit=1)
-        cmd = parts[0]
-        args = parts[1] if len(parts) > 1 else ""
-        return handle_command(cmd, args, sender_id)
-
-    # ----------------------------
-    # 3. Keyword commands
-    # ----------------------------
-    parts = text_lower.split(maxsplit=1)
-    first_word = parts[0] if parts else ""
     user_input = text.split(maxsplit=1)[1] if len(text.split()) > 1 else ""
 
+    # First, try built-in commands via handle_command
+    if first_word:
+        result = handle_command(first_word, user_input, sender_id)
+        if result is not None:
+            return result
+
+    # Then, try config-based commands
     for c in commands_config.get("commands", []):
         cmd_text = c.get("command", "").lower()
 
-        if cmd_text and not cmd_text.startswith("/") and cmd_text == first_word:
+        if cmd_text and cmd_text == first_word:
             if "ai_prompt" in c:
                 prompt = c["ai_prompt"].replace("{user_input}", user_input)
 
@@ -817,6 +790,7 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
                         return "Security code missing or invalid."
                     prompt = strip_pin(prompt)
 
+                # Auto-enable AI for channels when config command with ai_prompt is used
                 if not is_direct:
                     active_ai_channels[channel_idx] = now
 
@@ -828,13 +802,13 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
             return "No configured response for this keyword."
 
     # ----------------------------
-    # 4. Home Assistant routing
+    # 3. Home Assistant routing
     # ----------------------------
     if HOME_ASSISTANT_ENABLED and channel_idx == HOME_ASSISTANT_CHANNEL_INDEX:
         return route_message_text(text, channel_idx)
 
     # ----------------------------
-    # 5. AI fallback
+    # 4. AI fallback
     # ----------------------------
     if is_direct:
         return get_ai_response(text)
@@ -844,7 +818,7 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
         return get_ai_response(text)
 
     # ----------------------------
-    # 6. Silent ignore
+    # 5. Silent ignore
     # ----------------------------
     return None
 
