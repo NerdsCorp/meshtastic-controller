@@ -757,14 +757,13 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
     parts = text_lower.split()
     first_word = parts[0] if parts else ""
 
-    if first_word == "ai" and len(parts) == 2:
+    if first_word == "ai" and len(parts) == 2 and parts[1] in ("on", "off"):
         if parts[1] == "on":
             active_ai_channels[channel_idx] = now
             return "🤖 AI enabled for this channel."
         if parts[1] == "off":
             active_ai_channels.pop(channel_idx, None)
             return "🤖 AI disabled for this channel."
-        return "Usage: ai on | ai off"
 
     # ----------------------------
     # 2. Command matching (word-based)
