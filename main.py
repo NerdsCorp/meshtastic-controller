@@ -1659,7 +1659,7 @@ def start_discord_bot():
     class MeshtasticDiscordBot(discord.Client):
         async def on_ready(self):
             global discord_bot_channel, discord_bot_loop, DISCORD_CHANNEL_ID, config
-            print(f"[Discord Bot] Logged in as {self.user}")
+            add_script_log(f"[Discord Bot] Logged in as {self.user}")
 
             # Set presence
             presence_status = config.get("discord_presence_status", "online").lower()
@@ -1677,9 +1677,9 @@ def start_discord_bot():
                 try:
                     discord_bot_channel = await self.fetch_channel(int(DISCORD_CHANNEL_ID))
                     discord_bot_loop = asyncio.get_event_loop()
-                    print(f"[Discord Bot] Connected to channel: {discord_bot_channel.name}")
+                    add_script_log(f"[Discord Bot] Connected to channel: {discord_bot_channel.name}")
                 except Exception as e:
-                    print(f"[Discord Bot] Error fetching channel: {e}")
+                    add_script_log(f"[Discord Bot] Error fetching channel: {e}")
 
         async def on_message(self, message):
             global interface, DISCORD_RECEIVE_ENABLED, DISCORD_CHANNEL_ID, DISCORD_INBOUND_CHANNEL_INDEX
