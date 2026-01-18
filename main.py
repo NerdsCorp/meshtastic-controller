@@ -682,14 +682,6 @@ def handle_command(cmd, full_text, sender_id):
     elif cmd == "time":
         now = datetime.now(timezone_obj)
         return f"Current time in {timezone_str}: {now.strftime('%Y-%m-%d %H:%M:%S')}"
-    elif cmd in ["ai", "bot", "query", "data"]:
-        user_prompt = full_text.strip()
-        if AI_PROVIDER == "home_assistant" and HOME_ASSISTANT_ENABLE_PIN:
-            if not pin_is_valid(user_prompt):
-                return "Security code missing or invalid. Use 'PIN=XXXX'"
-            user_prompt = strip_pin(user_prompt)
-        ai_answer = get_ai_response(user_prompt)
-        return ai_answer if ai_answer else "🤖 [No AI response]"
     elif cmd == "whereami":
         lat, lon, tstamp = get_node_location(sender_id)
         sn = get_node_shortname(sender_id)
@@ -707,7 +699,7 @@ def handle_command(cmd, full_text, sender_id):
         sn = get_node_shortname(sender_id)
         return f"Hello {sn}! Received {LOCAL_LOCATION_STRING} by {AI_NODE_NAME}."
     elif cmd == "help":
-        built_in = ["about", "query", "whereami", "emergency", "911", "test", "motd"]
+        built_in = ["about", "time", "whereami", "emergency", "911", "test", "motd", "sms"]
         custom_cmds = [c.get("command", "").lstrip('/') for c in commands_config.get("commands",[])]
         return "Commands:\n" + ", ".join(built_in + custom_cmds)
     elif cmd == "motd":
@@ -730,24 +722,7 @@ def handle_command(cmd, full_text, sender_id):
         except Exception as e:
             print(f"⚠️ Failed to send SMS: {e}")
             return "Failed to send SMS."
-    for c in commands_config.get("commands", []):
-        config_cmd = c.get("command", "").lower()
-        # Normalize both commands by removing leading '/' for comparison
-        normalized_cmd = cmd.lstrip('/')
-        normalized_config_cmd = config_cmd.lstrip('/')
-        if normalized_config_cmd == normalized_cmd:
-            if "ai_prompt" in c:
-                user_input = full_text.strip()
-                custom_text = c["ai_prompt"].replace("{user_input}", user_input)
-                if AI_PROVIDER == "home_assistant" and HOME_ASSISTANT_ENABLE_PIN:
-                    if not pin_is_valid(custom_text):
-                        return "Security code missing or invalid."
-                    custom_text = strip_pin(custom_text)
-                ans = get_ai_response(custom_text)
-                return ans if ans else "🤖 [No AI response]"
-            elif "response" in c:
-                return c["response"]
-            return "No configured response for this command."
+    # No match in built-in commands
     return None
 
 def parse_incoming_text(text, sender_id, is_direct, channel_idx):
@@ -816,6 +791,7 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
                         return "Security code missing or invalid."
                     prompt = strip_pin(prompt)
 
+                # Auto-enable AI for channels when config command with ai_prompt is used
                 if not is_direct:
                     active_ai_channels[channel_idx] = now
 
