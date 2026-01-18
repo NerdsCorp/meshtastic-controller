@@ -544,7 +544,10 @@ def send_discord_message(content):
         return
     global discord_bot_channel, discord_bot_loop
     if discord_bot_channel is None:
-        print("⚠️ Discord bot channel not ready yet")
+        add_script_log("⚠️ Discord bot channel not ready yet")
+        return
+    if discord_bot_loop is None:
+        add_script_log("⚠️ Discord bot event loop not ready yet")
         return
     try:
         # Create a task to send the message asynchronously
@@ -553,7 +556,7 @@ def send_discord_message(content):
             discord_bot_loop
         )
     except Exception as e:
-        print(f"⚠️ Discord bot send error: {e}")
+        add_script_log(f"⚠️ Discord bot send error: {e}")
 
 # -----------------------------
 # Revised Emergency Notification Function
@@ -1647,17 +1650,17 @@ def connection_status_route():
     return jsonify({"status": connection_status, "error": last_error_message})
 
 # Discord Bot Implementation
-def start_discord_bot():
-    """Start the Discord bot that handles presence, sending, and receiving messages."""
+def create_discord_bot():
+    """Create and return the Discord bot instance."""
     global ENABLE_DISCORD, DISCORD_BOT_TOKEN
 
     if not ENABLE_DISCORD:
-        add_script_log("[Discord Bot] Not starting - Discord is disabled in config")
-        return
+        add_script_log("[Discord Bot] Not creating - Discord is disabled in config")
+        return None
 
     if not DISCORD_BOT_TOKEN:
-        add_script_log("[Discord Bot] Not starting - No bot token configured")
-        return
+        add_script_log("[Discord Bot] Not creating - No bot token configured")
+        return None
 
     # Set up intents to receive message content
     intents = discord.Intents.default()
@@ -1715,54 +1718,11 @@ def start_discord_bot():
                     send_broadcast_chunks(interface, formatted, DISCORD_INBOUND_CHANNEL_INDEX)
                     add_script_log(f"[Discord Bot] Routed message to mesh: {formatted}")
 
-    def run_bot():
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        client = MeshtasticDiscordBot(intents=intents)
-        try:
-            loop.run_until_complete(client.start(DISCORD_BOT_TOKEN))
-        except Exception as e:
-            add_script_log(f"[Discord Bot] Error: {e}")
-            import traceback
-            add_script_log(f"[Discord Bot] Traceback: {traceback.format_exc()}")
-
-    threading.Thread(target=run_bot, daemon=True).start()
-    add_script_log("[Discord Bot] Started in background thread")
+    return MeshtasticDiscordBot(intents=intents)
     
-def main():
-    global interface, restart_count, server_start_time, reset_event
-    server_start_time = server_start_time or datetime.now(timezone.utc)
-    restart_count += 1
-    add_script_log(f"Server restarted. Restart count: {restart_count}")
-    print("Starting Meshtastic Controller Server...")
-    load_archive()
-    start_discord_bot()
-    # Additional startup info:
-    if ENABLE_DISCORD:
-        print(f"Discord configuration enabled: Inbound channel index: {DISCORD_INBOUND_CHANNEL_INDEX}, Bot Token is {'set' if DISCORD_BOT_TOKEN else 'not set'}, Channel ID is {'set' if DISCORD_CHANNEL_ID else 'not set'}.")
-    else:
-        print("Discord configuration disabled.")
-    if ENABLE_TWILIO:
-        if TWILIO_SID and TWILIO_AUTH_TOKEN and ALERT_PHONE_NUMBER and TWILIO_FROM_NUMBER:
-            print("Twilio is configured for emergency SMS.")
-        else:
-            print("Twilio is not properly configured for emergency SMS.")
-    else:
-        print("Twilio is disabled.")
-    if ENABLE_SMTP:
-        if SMTP_HOST and SMTP_USER and SMTP_PASS and ALERT_EMAIL_TO:
-            print("SMTP is configured for emergency email alerts.")
-        else:
-            print("SMTP is not properly configured for emergency email alerts.")
-    else:
-        print("SMTP is disabled.")
-    print("Launching Flask in the background on port 5000...")
-    api_thread = threading.Thread(
-        target=app.run,
-        kwargs={"host": "0.0.0.0", "port": 5000, "debug": False},
-        daemon=True
-    )
-    api_thread.start()
+def run_meshtastic_connection():
+    """Run the Meshtastic connection loop in a thread."""
+    global interface, reset_event
     while True:
         try:
             print("---------------------------------------------------")
@@ -1813,6 +1773,80 @@ def main():
             time.sleep(30)
             reset_event.clear()
             continue
+
+async def async_main():
+    """Main async function that coordinates all services."""
+    global restart_count, server_start_time
+    server_start_time = server_start_time or datetime.now(timezone.utc)
+    restart_count += 1
+    add_script_log(f"Server restarted. Restart count: {restart_count}")
+    print("Starting Meshtastic Controller Server...")
+    load_archive()
+
+    # Additional startup info:
+    if ENABLE_DISCORD:
+        print(f"Discord configuration enabled: Inbound channel index: {DISCORD_INBOUND_CHANNEL_INDEX}, Bot Token is {'set' if DISCORD_BOT_TOKEN else 'not set'}, Channel ID is {'set' if DISCORD_CHANNEL_ID else 'not set'}.")
+    else:
+        print("Discord configuration disabled.")
+    if ENABLE_TWILIO:
+        if TWILIO_SID and TWILIO_AUTH_TOKEN and ALERT_PHONE_NUMBER and TWILIO_FROM_NUMBER:
+            print("Twilio is configured for emergency SMS.")
+        else:
+            print("Twilio is not properly configured for emergency SMS.")
+    else:
+        print("Twilio is disabled.")
+    if ENABLE_SMTP:
+        if SMTP_HOST and SMTP_USER and SMTP_PASS and ALERT_EMAIL_TO:
+            print("SMTP is configured for emergency email alerts.")
+        else:
+            print("SMTP is not properly configured for emergency email alerts.")
+    else:
+        print("SMTP is disabled.")
+
+    # Start Flask in a non-daemon thread (foreground)
+    print("Launching Flask on port 5000...")
+    api_thread = threading.Thread(
+        target=app.run,
+        kwargs={"host": "0.0.0.0", "port": 5000, "debug": False, "use_reloader": False},
+        daemon=False
+    )
+    api_thread.start()
+
+    # Start Meshtastic connection in a non-daemon thread (foreground)
+    print("Starting Meshtastic connection handler...")
+    mesh_thread = threading.Thread(
+        target=run_meshtastic_connection,
+        daemon=False
+    )
+    mesh_thread.start()
+
+    # Create and run Discord bot in the main event loop (foreground)
+    discord_client = create_discord_bot()
+    if discord_client:
+        print("Starting Discord bot in foreground...")
+        try:
+            await discord_client.start(DISCORD_BOT_TOKEN)
+        except Exception as e:
+            add_script_log(f"[Discord Bot] Error: {e}")
+            import traceback
+            add_script_log(f"[Discord Bot] Traceback: {traceback.format_exc()}")
+    else:
+        # If Discord is disabled, just wait for threads
+        print("Discord disabled. Waiting for other services...")
+        try:
+            # Keep the main loop alive
+            while True:
+                await asyncio.sleep(1)
+        except KeyboardInterrupt:
+            print("User interrupted the script. Shutting down.")
+
+def main():
+    """Entry point that starts the async main function."""
+    try:
+        asyncio.run(async_main())
+    except KeyboardInterrupt:
+        print("User interrupted the script. Exiting.")
+        add_script_log("Server exited via KeyboardInterrupt.")
 
 def connection_monitor(initial_delay=30):
     global connection_status
