@@ -151,6 +151,8 @@ timezone_obj = pytz.timezone(timezone_str)
 print(f"Timezone set to: {timezone_str}")
 add_script_log(f"Timezone set to: {timezone_str}")
 commands_config = safe_load_json(COMMANDS_CONFIG_FILE, {"commands": []})
+cmd_list = [c.get("command", "") for c in commands_config.get("commands", [])]
+print(f"Loaded {len(cmd_list)} commands from config: {', '.join(cmd_list)}")
 
 def reload_config():
     global config
@@ -194,6 +196,7 @@ if DEBUG_ENABLED:
 # AI Provider & Other Config Vars
 # -----------------------------
 AI_PROVIDER = config.get("ai_provider", "lmstudio").lower()
+print(f"AI Provider configured: {AI_PROVIDER}")
 SYSTEM_PROMPT = config.get("system_prompt", "You are a helpful assistant responding to mesh network chats.")
 LMSTUDIO_URL = config.get("lmstudio_url", "http://localhost:1234/v1/chat/completions")
 LMSTUDIO_TIMEOUT = config.get("lmstudio_timeout", 60)
@@ -781,8 +784,10 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
         cmd_text = c.get("command", "").lower()
 
         if cmd_text and cmd_text == first_word:
+            dprint(f"Matched config command: '{cmd_text}'")
             if "ai_prompt" in c:
                 prompt = c["ai_prompt"].replace("{user_input}", user_input)
+                dprint(f"AI prompt template: {c['ai_prompt']}, final prompt: '{prompt}'")
 
                 if AI_PROVIDER == "home_assistant" and HOME_ASSISTANT_ENABLE_PIN:
                     if not pin_is_valid(user_input):
@@ -793,7 +798,9 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
                 if not is_direct:
                     active_ai_channels[channel_idx] = now
 
-                return get_ai_response(prompt) or "🤖 [No AI response]"
+                ai_response = get_ai_response(prompt)
+                dprint(f"AI response: {ai_response}")
+                return ai_response or "🤖 [No AI response]"
 
             if "response" in c:
                 return c["response"].replace("{user_input}", user_input)
