@@ -1,6 +1,22 @@
 {
   "commands": [
     {
+      "command": "ai",
+      "ai_prompt": "{user_input}"
+    },
+    {
+      "command": "bot",
+      "ai_prompt": "{user_input}"
+    },
+    {
+      "command": "query",
+      "ai_prompt": "{user_input}"
+    },
+    {
+      "command": "data",
+      "ai_prompt": "{user_input}"
+    },
+    {
       "command": "/ping",
       "response": "Pong!"
     },

@@ -760,6 +760,31 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
         return get_ai_response(text)
     if HOME_ASSISTANT_ENABLED and channel_idx == HOME_ASSISTANT_CHANNEL_INDEX:
         return route_message_text(text, channel_idx)
+
+    # Check for configurable keywords (commands without "/" prefix)
+    text_lower = text.lower()
+    first_word = text_lower.split()[0] if text_lower.split() else ""
+
+    for c in commands_config.get("commands", []):
+        cmd_text = c.get("command", "")
+        # Only process commands that don't start with "/"
+        if not cmd_text.startswith("/") and cmd_text.lower() == first_word:
+            # Remove the keyword from the text
+            user_input = text[len(first_word):].strip()
+
+            if "ai_prompt" in c:
+                custom_text = c["ai_prompt"].replace("{user_input}", user_input)
+                if AI_PROVIDER == "home_assistant" and HOME_ASSISTANT_ENABLE_PIN:
+                    if not pin_is_valid(custom_text):
+                        return "Security code missing or invalid."
+                    custom_text = strip_pin(custom_text)
+                ans = get_ai_response(custom_text)
+                return ans if ans else "🤖 [No AI response]"
+            elif "response" in c:
+                # For static responses, replace {user_input} if present
+                return c["response"].replace("{user_input}", user_input)
+            return "No configured response for this keyword."
+
     return None
 
 def on_receive(packet=None, interface=None, **kwargs):
