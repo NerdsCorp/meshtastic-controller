@@ -219,7 +219,6 @@ AI_NODE_NAME = config.get("ai_node_name", "AI-Bot")
 FORCE_NODE_NUM = config.get("force_node_num", None)
 
 ENABLE_DISCORD = config.get("enable_discord", False)
-DISCORD_WEBHOOK_URL = config.get("discord_webhook_url", None)
 DISCORD_SEND_EMERGENCY = config.get("discord_send_emergency", False)
 DISCORD_SEND_AI = config.get("discord_send_ai", False)
 DISCORD_SEND_ALL = config.get("discord_send_all", False)
@@ -229,8 +228,7 @@ DISCORD_RECEIVE_ENABLED = config.get("discord_receive_enabled", True)
 DISCORD_INBOUND_CHANNEL_INDEX = config.get("discord_inbound_channel_index", None)
 if DISCORD_INBOUND_CHANNEL_INDEX is not None:
     DISCORD_INBOUND_CHANNEL_INDEX = int(DISCORD_INBOUND_CHANNEL_INDEX)
-ENABLE_DISCORD_WEBHOOK = config.get("enable_discord_webhook", False)
-# For polling Discord messages (optional)
+# For Discord bot (handles both sending and receiving)
 DISCORD_BOT_TOKEN = config.get("discord_bot_token", None)
 DISCORD_CHANNEL_ID = config.get("discord_channel_id", None)
 
@@ -258,6 +256,10 @@ interface = None
 
 lastDMNode = None
 lastChannelIndex = None
+
+# Discord bot globals
+discord_bot_channel = None
+discord_bot_loop = None
 
 # -----------------------------
 # Location Lookup Function
@@ -537,12 +539,21 @@ def get_ai_response(prompt):
         return None
 
 def send_discord_message(content):
-    if not (ENABLE_DISCORD and ENABLE_DISCORD_WEBHOOK and DISCORD_WEBHOOK_URL):
+    """Send a message to Discord using the bot client."""
+    if not (ENABLE_DISCORD and DISCORD_BOT_TOKEN and DISCORD_CHANNEL_ID):
+        return
+    global discord_bot_channel
+    if discord_bot_channel is None:
+        print("⚠️ Discord bot channel not ready yet")
         return
     try:
-        requests.post(DISCORD_WEBHOOK_URL, json={"content": content})
+        # Create a task to send the message asynchronously
+        asyncio.run_coroutine_threadsafe(
+            discord_bot_channel.send(content),
+            discord_bot_loop
+        )
     except Exception as e:
-        print(f"⚠️ Discord webhook error: {e}")
+        print(f"⚠️ Discord bot send error: {e}")
 
 # -----------------------------
 # Revised Emergency Notification Function
@@ -603,13 +614,13 @@ def send_emergency_notification(node_id, user_msg, lat=None, lon=None, position_
 
     # Attempt to post emergency alert to Discord if enabled.
     try:
-        if DISCORD_SEND_EMERGENCY and ENABLE_DISCORD and DISCORD_WEBHOOK_URL:
-            requests.post(DISCORD_WEBHOOK_URL, json={"content": full_msg})
+        if DISCORD_SEND_EMERGENCY and ENABLE_DISCORD:
+            send_discord_message(full_msg)
             print("✅ Emergency alert posted to Discord.")
         else:
             print("Discord emergency notifications disabled or not configured.")
     except Exception as e:
-        print(f"⚠️ Discord webhook error: {e}")
+        print(f"⚠️ Discord bot error: {e}")
 
 # -----------------------------
 # Helper: Validate/Strip PIN (for Home Assistant)
@@ -879,39 +890,6 @@ def logs():
         restart_count=restart_count,
         log_entries=log_entries
     )
-
-# -----------------------------
-# Revised Discord Webhook Route for Inbound Messages
-# -----------------------------
-@app.route("/discord_webhook", methods=["POST"])
-def discord_webhook():
-    if not DISCORD_RECEIVE_ENABLED:
-        return jsonify({"status": "disabled", "message": "Discord receive is disabled"}), 200
-    data = request.json
-    if not data:
-        return jsonify({"status": "error", "message": "No JSON payload provided"}), 400
-
-    # Extract the username (default if not provided)
-    username = data.get("username", "DiscordUser")
-    channel_index = DISCORD_INBOUND_CHANNEL_INDEX
-    message_text = data.get("message")
-    if message_text is None:
-        return jsonify({"status": "error", "message": "Missing message"}), 400
-
-    # Prepend username to the message
-    formatted_message = f"**{username}**: {message_text}"
-
-    try:
-        log_message("Discord", formatted_message, direct=False, channel_idx=int(channel_index))
-        if interface is None:
-            print("❌ Cannot route Discord message: interface is None.")
-        else:
-            send_broadcast_chunks(interface, formatted_message, int(channel_index))
-        print(f"✅ Routed Discord message back on channel {channel_index}")
-        return jsonify({"status": "sent", "channel_index": channel_index, "message": formatted_message})
-    except Exception as e:
-        print(f"⚠️ Discord webhook error: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
 
 # -----------------------------
 # New Twilio SMS Webhook Route for Inbound SMS
@@ -1668,15 +1646,22 @@ threading.excepthook = thread_excepthook
 def connection_status_route():
     return jsonify({"status": connection_status, "error": last_error_message})
 
-# Insert start_discord_presence() here
-def start_discord_presence():
+# Discord Bot Implementation
+def start_discord_bot():
+    """Start the Discord bot that handles presence, sending, and receiving messages."""
     if not config.get("enable_discord", False) or not config.get("discord_bot_token"):
         return
 
-    intents = discord.Intents.none()
-    class PresenceClient(discord.Client):
+    # Set up intents to receive message content
+    intents = discord.Intents.default()
+    intents.message_content = True
+
+    class MeshtasticDiscordBot(discord.Client):
         async def on_ready(self):
-            print(f"[Discord Presence] Logged in as {self.user}")
+            global discord_bot_channel, discord_bot_loop
+            print(f"[Discord Bot] Logged in as {self.user}")
+
+            # Set presence
             presence_status = config.get("discord_presence_status", "online").lower()
             status = discord.Status.online
             if presence_status == "idle":
@@ -1687,16 +1672,52 @@ def start_discord_presence():
             activity = discord.Game(name=activity_text)
             await self.change_presence(status=status, activity=activity)
 
-    def run_presence():
+            # Get the channel for sending messages
+            if DISCORD_CHANNEL_ID:
+                try:
+                    discord_bot_channel = await self.fetch_channel(int(DISCORD_CHANNEL_ID))
+                    discord_bot_loop = asyncio.get_event_loop()
+                    print(f"[Discord Bot] Connected to channel: {discord_bot_channel.name}")
+                except Exception as e:
+                    print(f"[Discord Bot] Error fetching channel: {e}")
+
+        async def on_message(self, message):
+            # Ignore messages from the bot itself
+            if message.author == self.user:
+                return
+
+            # Only process messages from the configured channel if receiving is enabled
+            if not DISCORD_RECEIVE_ENABLED:
+                return
+
+            if DISCORD_CHANNEL_ID and str(message.channel.id) != str(DISCORD_CHANNEL_ID):
+                return
+
+            # Process the message and send to mesh
+            if DISCORD_INBOUND_CHANNEL_INDEX is not None and message.content:
+                username = message.author.name
+                content = message.content
+                formatted = f"**{username}**: {content}"
+
+                log_message("DiscordBot", formatted, direct=False, channel_idx=DISCORD_INBOUND_CHANNEL_INDEX)
+
+                if interface is None:
+                    print("❌ Cannot send Discord message to mesh: interface is None.")
+                else:
+                    send_broadcast_chunks(interface, formatted, DISCORD_INBOUND_CHANNEL_INDEX)
+                    print(f"[Discord Bot] Routed message to mesh: {formatted}")
+
+    def run_bot():
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        client = PresenceClient(intents=intents)
+        client = MeshtasticDiscordBot(intents=intents)
         try:
             loop.run_until_complete(client.start(config["discord_bot_token"]))
         except Exception as e:
-            print(f"Discord presence client error: {e}")
+            print(f"[Discord Bot] Error: {e}")
 
-    threading.Thread(target=run_presence, daemon=True).start()
+    threading.Thread(target=run_bot, daemon=True).start()
+    print("[Discord Bot] Started in background thread")
     
 def main():
     global interface, restart_count, server_start_time, reset_event
@@ -1705,10 +1726,10 @@ def main():
     add_script_log(f"Server restarted. Restart count: {restart_count}")
     print("Starting Meshtastic Controller Server...")
     load_archive()
-    start_discord_presence()
-        # Additional startup info:
+    start_discord_bot()
+    # Additional startup info:
     if ENABLE_DISCORD:
-        print(f"Discord configuration enabled: Inbound channel index: {DISCORD_INBOUND_CHANNEL_INDEX}, Webhook URL is {'set' if DISCORD_WEBHOOK_URL else 'not set'}, Bot Token is {'set' if DISCORD_BOT_TOKEN else 'not set'}, Channel ID is {'set' if DISCORD_CHANNEL_ID else 'not set'}.")
+        print(f"Discord configuration enabled: Inbound channel index: {DISCORD_INBOUND_CHANNEL_INDEX}, Bot Token is {'set' if DISCORD_BOT_TOKEN else 'not set'}, Channel ID is {'set' if DISCORD_CHANNEL_ID else 'not set'}.")
     else:
         print("Discord configuration disabled.")
     if ENABLE_TWILIO:
@@ -1732,9 +1753,6 @@ def main():
         daemon=True
     )
     api_thread.start()
-    # If Discord polling is configured, start that thread.
-    if DISCORD_BOT_TOKEN and DISCORD_CHANNEL_ID:
-        threading.Thread(target=poll_discord_channel, daemon=True).start()
     while True:
         try:
             print("---------------------------------------------------")
@@ -1796,48 +1814,6 @@ def connection_monitor(initial_delay=30):
         time.sleep(5)
 
 # Start the watchdog thread after 20 seconds to give node a chance to connect
-def poll_discord_channel():
-    """Polls the Discord channel for new messages using the Discord API."""
-    # Wait a short period for interface to be set up
-    time.sleep(5)
-    last_message_id = None
-    headers = {"Authorization": f"Bot {DISCORD_BOT_TOKEN}"}
-    url = f"https://discord.com/api/v9/channels/{DISCORD_CHANNEL_ID}/messages"
-    while True:
-        try:
-            params = {"limit": 10}
-            if last_message_id:
-                params["after"] = last_message_id
-            response = requests.get(url, headers=headers, params=params)
-            if response.status_code == 200:
-                msgs = response.json()
-                msgs = sorted(msgs, key=lambda m: int(m["id"]))
-                for msg in msgs:
-                    if msg["author"].get("bot"):
-                        continue
-                    # Only process messages that arrived after the script started
-                    if last_message_id is None:
-                        msg_timestamp_str = msg.get("timestamp")
-                        if msg_timestamp_str:
-                            msg_time = datetime.fromisoformat(msg_timestamp_str.replace("Z", "+00:00"))
-                            if msg_time < server_start_time:
-                                continue
-                    username = msg["author"].get("username", "DiscordUser")
-                    content = msg.get("content")
-                    if content:
-                        formatted = f"**{username}**: {content}"
-                        log_message("DiscordPoll", formatted, direct=False, channel_idx=DISCORD_INBOUND_CHANNEL_INDEX)
-                        if interface is None:
-                            print("❌ Cannot send polled Discord message: interface is None.")
-                        else:
-                            send_broadcast_chunks(interface, formatted, DISCORD_INBOUND_CHANNEL_INDEX)
-                        print(f"Polled and routed Discord message: {formatted}")
-                        last_message_id = msg["id"]
-            else:
-                print(f"Discord poll error: {response.status_code} {response.text}")
-        except Exception as e:
-            print(f"Error polling Discord: {e}")
-        time.sleep(10)
 
 @app.route("/instructions", methods=["GET"])
 def instructions():
