@@ -27,7 +27,7 @@ Come join the Discord! https://discord.gg/Gsynun57aa
   - Emergency notifications include GPS coordinates, UTC timestamps, and user messages.
 - **Enhanced REST API & WebUI Dashboard**
   - A modern three‑column layout showing broadcast messages, direct messages, and available nodes.
-  - Additional endpoints include `/messages`, `/nodes`, `/connection_status`, `/logs`, `/send`, `/ui_send`, and a new `/discord_webhook` for inbound Discord messages.
+  - Additional endpoints include `/messages`, `/nodes`, `/connection_status`, `/logs`, `/send`, and `/ui_send`.
   - UI customization through settings such as theme color, hue rotation, and custom sounds.
 - **Improved Message Chunking & Routing**
   - Automatically splits long AI responses into configurable chunks with delays to reduce radio congestion.
@@ -36,8 +36,8 @@ Come join the Discord! https://discord.gg/Gsynun57aa
   - Uses UTC‑based timestamps with an auto‑truncating script log file (keeping the last 100 lines if the file grows beyond 100 MB).
   - Enhanced error detection (including specific OSError codes) and graceful reconnection using threaded exception hooks.
 - **Discord Integration Enhancements**
-  - Route messages to and from Discord.
-  - New configuration options and a dedicated `/discord_webhook` endpoint allow for inbound Discord message processing.
+  - Route messages to and from Discord using a Discord bot.
+  - Real-time message synchronization between Discord and your Meshtastic network.
 - **Windows‑Focused - Linux compatibility confirmed!**
   - Official support for Windows environments with installation guides; instructions for Linux available now!
 
@@ -162,12 +162,10 @@ The Meshtastic-AI server (running on Flask) exposes the following endpoints:
   Get current connection status and error details.
 - **GET /logs**  
   View a styled log page showing uptime, restarts, and recent log entries.
-- **GET /dashboard**  
+- **GET /dashboard**
   Access the full WebUI dashboard.
-- **POST /send** and **POST /ui_send**  
+- **POST /send** and **POST /ui_send**
   Send messages programmatically.
-- **POST /discord_webhook**  
-  Receive messages from Discord (if configured).
 
 ---
 
@@ -254,15 +252,16 @@ json
   ],
   
   "enable_discord": false,
-  "discord_webhook_url": "https://discord.com/api/webhooks/XXXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "discord_bot_token": "",
+  "discord_channel_id": "",
   "discord_send_emergency": false,
   "discord_send_ai": false,
   "discord_send_all": false,
-  "discord_response_channel_index": 0,
-  "discord_receive_enabled": false,
-  "discord_inbound_channel_index": 0,
-  "discord_bot_token": "",
-  "discord_channel_id": ""
+  "discord_receive_enabled": true,
+  "discord_inbound_channel_index": null,
+  "discord_response_channel_index": null,
+  "discord_presence_status": "online",
+  "discord_presence_activity": "Meshtastic-Controller Online"
 }
 
 
@@ -326,14 +325,14 @@ json
   - Customize your bot’s username and icon if desired.
 
 #### 2. Set Up Bot Permissions
-- **Required Permissions:**  
+- **Required Permissions:**
   Your bot needs a few basic permissions to function correctly:
   - **View Channels:** So it can see messages in the designated channels.
   - **Send Messages:** To post responses and emergency alerts.
-  - **Read Message History:** For polling messages from a channel (if polling is enabled).
+  - **Read Message History:** To receive messages from Discord in real-time.
   - **Manage Messages (Optional):** If you want the bot to delete or manage messages.
-- **Permission Calculator:**  
-  Use a tool like [Discord Permissions Calculator](https://discordapi.com/permissions.html) to generate the correct permission integer.  
+- **Permission Calculator:**
+  Use a tool like [Discord Permissions Calculator](https://discordapi.com/permissions.html) to generate the correct permission integer.
   For minimal functionality, a permission integer of **3072** (which covers "Send Messages," "View Channels," and "Read Message History") is often sufficient.
 
 #### 3. Invite the Bot to Your Server
@@ -351,26 +350,29 @@ Update your configuration file with the following keys (replace placeholder text
 json
 {
   "enable_discord": true,
-  "discord_webhook_url": "YOUR_DISCORD_WEBHOOK_URL",
-  "discord_receive_enabled": true,
   "discord_bot_token": "YOUR_BOT_TOKEN",
   "discord_channel_id": "YOUR_CHANNEL_ID",
-  "discord_inbound_channel_index": 1,  // or the channel number you prefer
+  "discord_receive_enabled": true,
+  "discord_inbound_channel_index": 1,
   "discord_send_ai": true,
-  "discord_send_emergency": true
+  "discord_send_emergency": true,
+  "discord_send_all": false,
+  "discord_presence_status": "online",
+  "discord_presence_activity": "Meshtastic-Controller Online"
 }
 
-- **discord_webhook_url:**  
-  Create a webhook in your desired Discord channel (Channel Settings → Integrations → Webhooks) and copy its URL.
-- **discord_bot_token & discord_channel_id:**  
-  Copy your bot’s token from the Developer Portal and enable message polling by specifying the channel ID where the bot should read messages.  
+- **discord_bot_token:**
+  Copy your bot's token from the Developer Portal (Bot tab → Reset Token or copy existing token).
+  **IMPORTANT:** Keep this token secret! Never share it publicly.
+- **discord_channel_id:**
+  The channel ID where the bot should send and receive messages.
   To get a channel ID, enable Developer Mode in Discord (User Settings → Advanced → Developer Mode) then right-click the channel and select "Copy ID."
 
-#### 5. Polling Integration (Optional)
-- **Enable Message Polling:**  
-  Set "discord_receive_enabled": true to allow the bot to poll for new messages.
-- **Routing:**  
-  The configuration key "discord_inbound_channel_index" determines the channel number used by Meshtastic-AI for routing incoming Discord messages. Make sure it matches your setup.
+#### 5. Message Routing
+- **Enable Message Receiving:**
+  Set "discord_receive_enabled": true to allow the bot to receive messages from Discord.
+- **Routing:**
+  The configuration key "discord_inbound_channel_index" determines the Meshtastic channel number used for routing incoming Discord messages. Make sure it matches your setup.
 
 #### 6. Testing Your Discord Setup
 - **Restart Meshtastic-AI:**  
@@ -381,12 +383,14 @@ json
   Confirm that emergency alerts and AI responses are being posted in Discord as per your configuration ("discord_send_ai": true and "discord_send_emergency": true).
 
 #### 7. Troubleshooting Tips
-- **Permissions Issues:**  
-  If the bot isn’t responding or reading messages, double-check that its role on your server has the required permissions.
-- **Channel IDs & Webhook URLs:**  
-  Verify that you’ve copied the correct channel IDs and webhook URLs (ensure no extra spaces or formatting issues).
-- **Bot Token Security:**  
+- **Permissions Issues:**
+  If the bot isn't responding or reading messages, double-check that its role on your server has the required permissions.
+- **Channel IDs:**
+  Verify that you've copied the correct channel ID (ensure no extra spaces or formatting issues).
+- **Bot Token Security:**
   Keep your bot token secure. If it gets compromised, regenerate it immediately from the Developer Portal.
+- **Message Content Intent:**
+  Make sure your bot has the "Message Content" intent enabled in the Discord Developer Portal (Bot tab → Privileged Gateway Intents → Message Content Intent).
 
 ---
 

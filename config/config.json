@@ -66,11 +66,14 @@
   "alert_email_to": "ALERT EMAIL HERE",
 
   "enable_discord": false,
-  "enable_discord_webhook": false,
-  "discord_webhook_url": "",
+  "discord_bot_token": "",
+  "discord_channel_id": "",
   "discord_send_emergency": false,
   "discord_send_ai": false,
   "discord_send_all": false,
+  "discord_receive_enabled": true,
+  "discord_inbound_channel_index": null,
+  "discord_response_channel_index": null,
   "discord_presence_status": "online",
   "discord_presence_activity": "Meshtastic-Controller Online"
 }
