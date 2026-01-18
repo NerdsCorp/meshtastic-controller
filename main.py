@@ -731,7 +731,11 @@ def handle_command(cmd, full_text, sender_id):
             print(f"⚠️ Failed to send SMS: {e}")
             return "Failed to send SMS."
     for c in commands_config.get("commands", []):
-        if c.get("command").lower() == cmd:
+        config_cmd = c.get("command", "").lower()
+        # Normalize both commands by removing leading '/' for comparison
+        normalized_cmd = cmd.lstrip('/')
+        normalized_config_cmd = config_cmd.lstrip('/')
+        if normalized_config_cmd == normalized_cmd:
             if "ai_prompt" in c:
                 user_input = full_text[len(cmd):].strip()
                 custom_text = c["ai_prompt"].replace("{user_input}", user_input)
