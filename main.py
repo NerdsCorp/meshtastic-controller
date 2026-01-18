@@ -550,13 +550,23 @@ def send_discord_message(content):
         add_script_log("⚠️ Discord bot event loop not ready yet")
         return
     try:
-        # Create a task to send the message asynchronously
-        asyncio.run_coroutine_threadsafe(
+        # Create a task to send the message asynchronously (fire and forget)
+        future = asyncio.run_coroutine_threadsafe(
             discord_bot_channel.send(content),
             discord_bot_loop
         )
+        # Add callback to log result
+        def log_result(f):
+            try:
+                f.result()
+                add_script_log(f"[Discord] ✅ Sent to Discord: {content[:50]}...")
+            except Exception as e:
+                add_script_log(f"⚠️ Discord send failed: {e}")
+        future.add_done_callback(log_result)
     except Exception as e:
         add_script_log(f"⚠️ Discord bot send error: {e}")
+        import traceback
+        add_script_log(f"[Discord] Traceback: {traceback.format_exc()}")
 
 # -----------------------------
 # Revised Emergency Notification Function
@@ -1667,6 +1677,7 @@ def create_discord_bot():
     intents.guilds = True
     intents.guild_messages = True
     intents.message_content = True
+    add_script_log(f"[Discord Bot] Intents configured - guilds: {intents.guilds}, messages: {intents.guild_messages}, content: {intents.message_content}")
 
     class MeshtasticDiscordBot(discord.Client):
         async def on_ready(self):
@@ -1688,10 +1699,13 @@ def create_discord_bot():
             if DISCORD_CHANNEL_ID:
                 try:
                     discord_bot_channel = await self.fetch_channel(int(DISCORD_CHANNEL_ID))
-                    discord_bot_loop = asyncio.get_event_loop()
-                    add_script_log(f"[Discord Bot] Connected to channel: {discord_bot_channel.name}")
+                    discord_bot_loop = asyncio.get_running_loop()
+                    add_script_log(f"[Discord Bot] ✅ Connected to channel: {discord_bot_channel.name}")
+                    add_script_log(f"[Discord Bot] Event loop captured: {id(discord_bot_loop)}")
                 except Exception as e:
-                    add_script_log(f"[Discord Bot] Error fetching channel: {e}")
+                    add_script_log(f"[Discord Bot] ❌ Error fetching channel: {e}")
+                    import traceback
+                    add_script_log(f"[Discord Bot] Traceback: {traceback.format_exc()}")
 
         async def on_message(self, message):
             global interface, DISCORD_RECEIVE_ENABLED, DISCORD_CHANNEL_ID, DISCORD_INBOUND_CHANNEL_INDEX
@@ -1727,6 +1741,12 @@ def create_discord_bot():
                 add_script_log("[Discord Bot] Message ignored: DISCORD_INBOUND_CHANNEL_INDEX is not configured")
             elif not message.content:
                 add_script_log("[Discord Bot] Message ignored: empty content")
+
+        async def on_error(self, event_method, *args, **kwargs):
+            """Handle errors in Discord bot event handlers."""
+            import traceback
+            add_script_log(f"[Discord Bot] ❌ Error in {event_method}:")
+            add_script_log(f"[Discord Bot] {traceback.format_exc()}")
 
     return MeshtasticDiscordBot(intents=intents)
     
@@ -1795,7 +1815,19 @@ async def async_main():
 
     # Additional startup info:
     if ENABLE_DISCORD:
-        print(f"Discord configuration enabled: Inbound channel index: {DISCORD_INBOUND_CHANNEL_INDEX}, Bot Token is {'set' if DISCORD_BOT_TOKEN else 'not set'}, Channel ID is {'set' if DISCORD_CHANNEL_ID else 'not set'}.")
+        print("=" * 60)
+        print("Discord Configuration:")
+        print(f"  ✓ Enabled: True")
+        print(f"  Bot Token: {'✓ set' if DISCORD_BOT_TOKEN else '✗ NOT SET'}")
+        print(f"  Channel ID: {'✓ set (' + DISCORD_CHANNEL_ID + ')' if DISCORD_CHANNEL_ID else '✗ NOT SET'}")
+        print(f"  Inbound Channel Index: {DISCORD_INBOUND_CHANNEL_INDEX if DISCORD_INBOUND_CHANNEL_INDEX is not None else '✗ NOT SET'}")
+        print(f"  Receive Enabled: {DISCORD_RECEIVE_ENABLED}")
+        print(f"  Send All Messages: {DISCORD_SEND_ALL}")
+        print(f"  Send AI Responses: {DISCORD_SEND_AI}")
+        print(f"  Send Emergency: {DISCORD_SEND_EMERGENCY}")
+        print(f"  Presence Status: {config.get('discord_presence_status', 'online')}")
+        print(f"  Presence Activity: {config.get('discord_presence_activity', 'Meshtastic Controller Online')}")
+        print("=" * 60)
     else:
         print("Discord configuration disabled.")
     if ENABLE_TWILIO:
