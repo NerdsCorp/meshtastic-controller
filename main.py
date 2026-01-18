@@ -750,25 +750,39 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
     if not text:
         return None
 
-    # Respect config, but don't change behavior logic
+    # Config gate
     if is_direct and not config.get("reply_in_directs", True):
         return None
     if (not is_direct) and not config.get("reply_in_channels", True):
         return None
 
+    text_lower = text.lower()
+
     # ----------------------------
-    # 1. Slash commands
+    # 1. Stop AI command (channel only)
+    # ----------------------------
+    if not is_direct and channel_idx in active_ai_channels and text_lower in ("stop", "ai stop", "stop ai"):
+        active_ai_channels.discard(channel_idx)
+        return "🤖 AI responses disabled for this channel."
+
+    # ----------------------------
+    # 2. Slash commands
     # ----------------------------
     if text.startswith("/"):
         parts = text.split(maxsplit=1)
         cmd = parts[0]
         args = parts[1] if len(parts) > 1 else ""
-        return handle_command(cmd, args, sender_id)
+        resp = handle_command(cmd, args, sender_id)
+
+        # Arm AI if command triggered it
+        if not is_direct and resp and "ai" in cmd.lower():
+            active_ai_channels.add(channel_idx)
+
+        return resp
 
     # ----------------------------
-    # 2. Keyword commands (no "/")
+    # 3. Keyword commands
     # ----------------------------
-    text_lower = text.lower()
     parts = text_lower.split(maxsplit=1)
     first_word = parts[0] if parts else ""
     user_input = text.split(maxsplit=1)[1] if len(text.split()) > 1 else ""
@@ -785,6 +799,10 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
                         return "Security code missing or invalid."
                     prompt = strip_pin(prompt)
 
+                # Arm AI for channel
+                if not is_direct:
+                    active_ai_channels.add(channel_idx)
+
                 return get_ai_response(prompt) or "🤖 [No AI response]"
 
             if "response" in c:
@@ -793,15 +811,25 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
             return "No configured response for this keyword."
 
     # ----------------------------
-    # 3. Home Assistant routing
+    # 4. Home Assistant routing
     # ----------------------------
     if HOME_ASSISTANT_ENABLED and channel_idx == HOME_ASSISTANT_CHANNEL_INDEX:
         return route_message_text(text, channel_idx)
 
     # ----------------------------
-    # 4. AI fallback (DMs + channels)
+    # 5. AI fallback
     # ----------------------------
-    return get_ai_response(text)
+    if is_direct:
+        return get_ai_response(text)
+
+    if channel_idx in active_ai_channels:
+        return get_ai_response(text)
+
+    # ----------------------------
+    # 6. Silent ignore in channels
+    # ----------------------------
+    return None
+
 
 def on_receive(packet=None, interface=None, **kwargs):
     dprint(f"on_receive => packet={packet}")
@@ -2328,4 +2356,5 @@ if __name__ == "__main__":
         logging.error(f"Unhandled error in main: {e}")
         add_script_log(f"Unhandled error: {e}")
         print("Encountered an error. Exiting...")
+
 
