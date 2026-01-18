@@ -1658,7 +1658,7 @@ def start_discord_bot():
 
     class MeshtasticDiscordBot(discord.Client):
         async def on_ready(self):
-            global discord_bot_channel, discord_bot_loop
+            global discord_bot_channel, discord_bot_loop, DISCORD_CHANNEL_ID
             print(f"[Discord Bot] Logged in as {self.user}")
 
             # Set presence
@@ -1682,6 +1682,7 @@ def start_discord_bot():
                     print(f"[Discord Bot] Error fetching channel: {e}")
 
         async def on_message(self, message):
+            global interface, DISCORD_RECEIVE_ENABLED, DISCORD_CHANNEL_ID, DISCORD_INBOUND_CHANNEL_INDEX
             # Ignore messages from the bot itself
             if message.author == self.user:
                 return
