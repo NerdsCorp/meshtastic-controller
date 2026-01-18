@@ -807,8 +807,11 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
 
     for c in commands_config.get("commands", []):
         cmd_text = c.get("command", "").lower()
+        # Normalize both by removing leading '/' for flexible matching
+        normalized_cmd = cmd_text.lstrip('/')
+        normalized_first = first_word.lstrip('/')
 
-        if cmd_text and not cmd_text.startswith("/") and cmd_text == first_word:
+        if normalized_cmd and normalized_cmd == normalized_first:
             if "ai_prompt" in c:
                 prompt = c["ai_prompt"].replace("{user_input}", user_input)
 
