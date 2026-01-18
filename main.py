@@ -675,7 +675,7 @@ def route_message_text(user_message, channel_idx):
 # Revised Command Handler (Case-Insensitive)
 # -----------------------------
 def handle_command(cmd, full_text, sender_id):
-    cmd = cmd.lower().lstrip('/')  # Normalize by removing any leading slash
+    cmd = cmd.lower()
     dprint(f"handle_command => cmd='{cmd}', full_text='{full_text}', sender_id={sender_id}")
     if cmd == "about":
         return "Meshtastic-Controller Off Grid Chat - By: WWW.NerdsCorp.NET"
@@ -700,7 +700,7 @@ def handle_command(cmd, full_text, sender_id):
         return f"Hello {sn}! Received {LOCAL_LOCATION_STRING} by {AI_NODE_NAME}."
     elif cmd == "help":
         built_in = ["about", "time", "whereami", "emergency", "911", "test", "motd", "sms"]
-        custom_cmds = [c.get("command", "").lstrip('/') for c in commands_config.get("commands",[])]
+        custom_cmds = [c.get("command", "") for c in commands_config.get("commands",[])]
         return "Commands:\n" + ", ".join(built_in + custom_cmds)
     elif cmd == "motd":
         return motd_content
@@ -755,9 +755,9 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
     # 1. ai on | ai off (special handling)
     # ----------------------------
     parts = text_lower.split()
-    first_word_normalized = parts[0].lstrip('/') if parts else ""
+    first_word = parts[0] if parts else ""
 
-    if first_word_normalized == "ai" and len(parts) == 2:
+    if first_word == "ai" and len(parts) == 2:
         if parts[1] == "on":
             active_ai_channels[channel_idx] = now
             return "🤖 AI enabled for this channel."
@@ -767,9 +767,8 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
         return "Usage: ai on | ai off"
 
     # ----------------------------
-    # 2. Command matching (unified - no slash required)
+    # 2. Command matching (word-based)
     # ----------------------------
-    first_word = first_word_normalized  # Already normalized above
     user_input = text.split(maxsplit=1)[1] if len(text.split()) > 1 else ""
 
     # First, try built-in commands via handle_command
@@ -780,7 +779,7 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
 
     # Then, try config-based commands
     for c in commands_config.get("commands", []):
-        cmd_text = c.get("command", "").lower().lstrip('/')  # Normalize config command
+        cmd_text = c.get("command", "").lower()
 
         if cmd_text and cmd_text == first_word:
             if "ai_prompt" in c:
