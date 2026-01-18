@@ -743,6 +743,8 @@ def handle_command(cmd, full_text, sender_id):
     return None
 
 def parse_incoming_text(text, sender_id, is_direct, channel_idx):
+    now = time.time()
+
     dprint(f"parse_incoming_text => text='{text}' is_direct={is_direct} channel={channel_idx}")
     info_print(f"[Info] Received from node {sender_id} (direct={is_direct}, ch={channel_idx}) => '{text}'")
 
@@ -759,11 +761,25 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
     text_lower = text.lower()
 
     # ----------------------------
-    # 1. Stop AI command (channel only)
+    # 0. Timeout-based auto-disable
     # ----------------------------
-    if not is_direct and channel_idx in active_ai_channels and text_lower in ("stop", "ai stop", "stop ai"):
-        active_ai_channels.discard(channel_idx)
-        return "🤖 AI responses disabled for this channel."
+    if channel_idx in active_ai_channels:
+        if now - active_ai_channels[channel_idx] > AI_CHANNEL_TIMEOUT:
+            del active_ai_channels[channel_idx]
+            dprint(f"AI auto-disabled for channel {channel_idx} (timeout)")
+
+    # ----------------------------
+    # 1. /ai on | /ai off
+    # ----------------------------
+    if text_lower.startswith("/ai"):
+        parts = text_lower.split()
+        if len(parts) == 2 and parts[1] == "on":
+            active_ai_channels[channel_idx] = now
+            return "🤖 AI enabled for this channel."
+        if len(parts) == 2 and parts[1] == "off":
+            active_ai_channels.pop(channel_idx, None)
+            return "🤖 AI disabled for this channel."
+        return "Usage: /ai on | /ai off"
 
     # ----------------------------
     # 2. Slash commands
@@ -772,13 +788,7 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
         parts = text.split(maxsplit=1)
         cmd = parts[0]
         args = parts[1] if len(parts) > 1 else ""
-        resp = handle_command(cmd, args, sender_id)
-
-        # Arm AI if command triggered it
-        if not is_direct and resp and "ai" in cmd.lower():
-            active_ai_channels.add(channel_idx)
-
-        return resp
+        return handle_command(cmd, args, sender_id)
 
     # ----------------------------
     # 3. Keyword commands
@@ -799,9 +809,8 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
                         return "Security code missing or invalid."
                     prompt = strip_pin(prompt)
 
-                # Arm AI for channel
                 if not is_direct:
-                    active_ai_channels.add(channel_idx)
+                    active_ai_channels[channel_idx] = now
 
                 return get_ai_response(prompt) or "🤖 [No AI response]"
 
@@ -823,10 +832,11 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
         return get_ai_response(text)
 
     if channel_idx in active_ai_channels:
+        active_ai_channels[channel_idx] = now  # refresh activity
         return get_ai_response(text)
 
     # ----------------------------
-    # 6. Silent ignore in channels
+    # 6. Silent ignore
     # ----------------------------
     return None
 
