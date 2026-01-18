@@ -1664,6 +1664,8 @@ def create_discord_bot():
 
     # Set up intents to receive message content
     intents = discord.Intents.default()
+    intents.guilds = True
+    intents.guild_messages = True
     intents.message_content = True
 
     class MeshtasticDiscordBot(discord.Client):
@@ -1697,11 +1699,15 @@ def create_discord_bot():
             if message.author == self.user:
                 return
 
+            add_script_log(f"[Discord Bot] Message received from {message.author.name} in channel {message.channel.id}")
+
             # Only process messages from the configured channel if receiving is enabled
             if not DISCORD_RECEIVE_ENABLED:
+                add_script_log("[Discord Bot] Message ignored: DISCORD_RECEIVE_ENABLED is False")
                 return
 
             if DISCORD_CHANNEL_ID and str(message.channel.id) != str(DISCORD_CHANNEL_ID):
+                add_script_log(f"[Discord Bot] Message ignored: channel {message.channel.id} != configured {DISCORD_CHANNEL_ID}")
                 return
 
             # Process the message and send to mesh
@@ -1716,7 +1722,11 @@ def create_discord_bot():
                     add_script_log("❌ Cannot send Discord message to mesh: interface is None.")
                 else:
                     send_broadcast_chunks(interface, formatted, DISCORD_INBOUND_CHANNEL_INDEX)
-                    add_script_log(f"[Discord Bot] Routed message to mesh: {formatted}")
+                    add_script_log(f"[Discord Bot] ✅ Routed message to mesh channel {DISCORD_INBOUND_CHANNEL_INDEX}: {formatted}")
+            elif DISCORD_INBOUND_CHANNEL_INDEX is None:
+                add_script_log("[Discord Bot] Message ignored: DISCORD_INBOUND_CHANNEL_INDEX is not configured")
+            elif not message.content:
+                add_script_log("[Discord Bot] Message ignored: empty content")
 
     return MeshtasticDiscordBot(intents=intents)
     
