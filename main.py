@@ -1658,7 +1658,7 @@ def start_discord_bot():
 
     class MeshtasticDiscordBot(discord.Client):
         async def on_ready(self):
-            global discord_bot_channel, discord_bot_loop, DISCORD_CHANNEL_ID
+            global discord_bot_channel, discord_bot_loop, DISCORD_CHANNEL_ID, config
             print(f"[Discord Bot] Logged in as {self.user}")
 
             # Set presence
