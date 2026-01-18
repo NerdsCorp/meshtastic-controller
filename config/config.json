@@ -7,7 +7,7 @@
   "timezone": "America/New_York",
 
   "serial_port": "",
-  "ai_provider": "lmstudio, openai, or ollama",
+  "ai_provider": "ollama",
   "system_prompt": "You are a helpful assistant responding to mesh network chats. Respond in as few words as possible while still answering fully.",
 
   "lmstudio_url": "http://localhost:1234/v1/chat/completions",
