@@ -760,6 +760,20 @@ def parse_incoming_text(text, sender_id, is_direct, channel_idx):
         return get_ai_response(text)
     if HOME_ASSISTANT_ENABLED and channel_idx == HOME_ASSISTANT_CHANNEL_INDEX:
         return route_message_text(text, channel_idx)
+
+    # Check for AI keywords without "/" prefix
+    text_lower = text.lower()
+    first_word = text_lower.split()[0] if text_lower.split() else ""
+    ai_keywords = ["ai", "bot", "query", "data"]
+    if first_word in ai_keywords:
+        # Remove the keyword and send the rest to AI
+        user_prompt = text[len(first_word):].strip()
+        if AI_PROVIDER == "home_assistant" and HOME_ASSISTANT_ENABLE_PIN:
+            if not pin_is_valid(user_prompt):
+                return "Security code missing or invalid. Use 'PIN=XXXX'"
+            user_prompt = strip_pin(user_prompt)
+        return get_ai_response(user_prompt)
+
     return None
 
 def on_receive(packet=None, interface=None, **kwargs):
