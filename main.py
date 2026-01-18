@@ -683,7 +683,7 @@ def handle_command(cmd, full_text, sender_id):
         now = datetime.now(timezone_obj)
         return f"Current time in {timezone_str}: {now.strftime('%Y-%m-%d %H:%M:%S')}"
     elif cmd in ["/ai", "/bot", "/query", "/data"]:
-        user_prompt = full_text[len(cmd):].strip()
+        user_prompt = full_text.strip()
         if AI_PROVIDER == "home_assistant" and HOME_ASSISTANT_ENABLE_PIN:
             if not pin_is_valid(user_prompt):
                 return "Security code missing or invalid. Use 'PIN=XXXX'"
@@ -699,7 +699,7 @@ def handle_command(cmd, full_text, sender_id):
         return f"Node {sn} GPS: {lat}, {lon} (time: {tstr})"
     elif cmd in ["/emergency", "/911"]:
         lat, lon, tstamp = get_node_location(sender_id)
-        user_msg = full_text[len(cmd):].strip()
+        user_msg = full_text.strip()
         send_emergency_notification(sender_id, user_msg, lat, lon, tstamp)
         log_message(sender_id, f"EMERGENCY TRIGGERED: {full_text}", is_emergency=True)
         return "🚨 Emergency alert sent. Stay safe."
@@ -737,7 +737,7 @@ def handle_command(cmd, full_text, sender_id):
         normalized_config_cmd = config_cmd.lstrip('/')
         if normalized_config_cmd == normalized_cmd:
             if "ai_prompt" in c:
-                user_input = full_text[len(cmd):].strip()
+                user_input = full_text.strip()
                 custom_text = c["ai_prompt"].replace("{user_input}", user_input)
                 if AI_PROVIDER == "home_assistant" and HOME_ASSISTANT_ENABLE_PIN:
                     if not pin_is_valid(custom_text):
